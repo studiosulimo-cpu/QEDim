@@ -58,7 +58,7 @@ svg text{fill:var(--tx);font-family:system-ui,sans-serif}
 <body>
 <header>
   <div><h1>Dimensionatore Quadri BT — residenziale e FV ≤ 20 kW</h1>
-  <small>Sistema TT · CEI 64-8 · CEI-UNEL 35024/1 e 35023 · CEI 23-51 · CEI 0-21 · Catalogo tecnico Gewiss Energy 2026-27 · v1.3.1</small></div>
+  <small>Sistema TT · CEI 64-8 · CEI-UNEL 35024/1 e 35023 · CEI 23-51 · CEI 0-21 · Catalogo tecnico Gewiss Energy 2026-27 · v1.3.2</small></div>
   <div class="btns">
     <button class="sec" onclick="saveLS(true)">Salva</button>
     <button class="sec" onclick="exportJSON()">Esporta progetto</button>
@@ -333,7 +333,7 @@ function sizeLine(o,sup,F,up){
  return{sol,In,S:Sx,Iz,dv,Icc,K2S2,i2tV:it.v,i2t,IccMin,Im,mag,nc,trace:t,msgs:m};
 }
 
-function calc(){
+function calcCore(minGen,drv){
  const F=S.forn,tri=F.fasi==3,R={msgs:[],Q:{},order:[],dc:[],box:[]};const add=(k,t)=>R.msgs.push([k,t]);
  const Qs=S.quadri,byId=Object.fromEntries(Qs.map(q=>[q.id,q]));
  const root=Qs.find(q=>!q.parent)||Qs[0];root.parent='';
@@ -400,9 +400,11 @@ function calc(){
   if(q===root){
    const IbC=tri?F.P*1000*1.1/(Math.sqrt(3)*400*0.95):F.P*1000*1.1/(230*0.95),IbPh=maxPh(q._load.c),IbG=Math.max(IbC,IbPh,maxPh(q._load.g));
    if(IbPh>IbC*1.02)add('wa',`Quadro generale: la fase più carica (${f(IbPh,1)} A con Kc ${q.kc}) supera la corrente di contratto equilibrata (${f(IbC,1)} A). Generale dimensionato sulla fase più carica; riequilibrare le fasi o ridurre Kc se realistico.`);
-   const mxDn=q.selAmp!=='no'?estMaxIn(q):0,minG=mxDn?(STD_IN.find(x=>x>mxDn)||99):0;
+   const minG=minGen||0;
    for(const ser of['MT 60','MT 100']){if(SERI[ser].icn<sup.IccQ)continue;head=DEV.filter(d=>d.ser===ser&&d.poles===po&&d.curve==='C').sort((a,b)=>a.In-b.In).find(d=>inEff('MT',d.In,F.tq)>=IbG&&d.In>=minG);if(head)break}
-   if(mxDn)Rq.trace.push(`Selettività sul sovraccarico verso le linee: protezione più grande a valle ${mxDn} A → generale In ≥ ${minG} A`);
+   if(!head&&minG){for(const ser of['MT 60','MT 100']){if(SERI[ser].icn<sup.IccQ)continue;head=DEV.filter(d=>d.ser===ser&&d.poles===po&&d.curve==='C').sort((a,b)=>a.In-b.In).find(d=>inEff('MT',d.In,F.tq)>=IbG);if(head)break}}
+   if(minG)Rq.trace.push(`Selettività sul sovraccarico: protezione più grande nel quadro generale = ${drv.In} A (${drv.nome}) → generale In ≥ ${minG} A`);
+   if(minG>63)add('er',`Selettività sul sovraccarico impossibile con modulari: "${drv.nome}" è ${drv.In} A, il generale dovrebbe superare 63 A. Ridurre la linea (Kc del sottoquadro, selettività della linea su "No") o disattivare la selettività del generale.`);
    if(head&&head.In>IbC*1.3)add('in',`Generale In ${head.In} A > corrente di contratto ${f(IbC,1)} A: scelto per la selettività sulle linee a valle; la potenza resta limitata dal contatore. Disattivabile nel tab Quadri.`);
    Rq.trace.push(`Ib prelievo = 1,1·Pcontr/(${tri?'√3·400':'230'}·0,95) = ${f(IbC,1)} A (+10% tollerato dal limitatore, ipotesi); immissione FV max per fase ${f(maxPh(q._load.g),1)} A`);
    Rq.trace.push(`Corrente per fase a valle (con Ku e Kc ${q.kc}): ${['L1','L2','L3'].slice(0,tri?3:1).map(p=>p+' '+f(q._load.c[p],1)+' A').join(', ')} → Ib generale = ${f(IbG,1)} A`);
@@ -516,6 +518,15 @@ function calc(){
  return R;
 }
 
+// Due passate: 1) dimensiona tutte le linee del quadro generale; 2) sceglie il generale sopra la linea più grande realmente scelta
+function calc(){
+ const R1=calcCore(0,null),RG=R1.Q[R1.root];
+ if(RG.q.selAmp==='no')return R1;
+ const ls=RG.lines.filter(l=>!l.err&&l.In);if(!ls.length)return R1;
+ const drv=ls.reduce((a,b)=>b.In>a.In?b:a);const minG=STD_IN.find(x=>x>drv.In)||99;
+ if(RG.head&&RG.head.In>=minG){RG.trace.push(`Selettività sul sovraccarico: protezione più grande nel quadro generale = ${drv.In} A (${drv.nome}) → generale In ${RG.head.In} A già superiore ✓`);return R1}
+ return calcCore(minG,drv);
+}
 /* ===================== MODELLI E SOTTOQUADRI TIPICI ===================== */
 const QB=(nome,fasi,pos,o={})=>Object.assign({nome,fasi,fase:'auto',pos,porta:'fume',size:'auto',ris:20,spd:'no',testa:'sez',kc:1,feeder:Object.assign({},FEED0)},o);
 const PRESET={
