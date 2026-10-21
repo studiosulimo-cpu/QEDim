@@ -58,7 +58,7 @@ svg text{fill:var(--tx);font-family:system-ui,sans-serif}
 <body>
 <header>
   <div><h1>Dimensionatore Quadri BT — residenziale e FV ≤ 20 kW</h1>
-  <small>Sistema TT · CEI 64-8 · CEI-UNEL 35024/1 e 35023 · CEI 23-51 · CEI 0-21 · Catalogo tecnico Gewiss Energy 2026-27 · v1.3</small></div>
+  <small>Sistema TT · CEI 64-8 · CEI-UNEL 35024/1 e 35023 · CEI 23-51 · CEI 0-21 · Catalogo tecnico Gewiss Energy 2026-27 · v1.3.1</small></div>
   <div class="btns">
     <button class="sec" onclick="saveLS(true)">Salva</button>
     <button class="sec" onclick="exportJSON()">Esporta progetto</button>
@@ -266,7 +266,7 @@ function tplVilla(){return{
 };}
 function migrate(s){const d=defaults();s.forn=Object.assign({},d.forn,s.forn);
  if(!s.quadri||!s.quadri.length){s.quadri=[Object.assign({},d.quadri[0],{pos:s.forn.pos||'parete',porta:s.forn.porta||'fume',ris:s.forn.ris??20,spd:s.forn.spd||'si'})];(s.circ||[]).forEach(c=>c.q='QG');(s.inv||[]).forEach(v=>v.q='QG')}
- s.quadri=s.quadri.map(q=>Object.assign({fasi:3,fase:'auto',pos:'parete',porta:'fume',size:'auto',ris:20,spd:'no',testa:'sez',kc:1},q,{feeder:q.parent?Object.assign({},FEED0,q.feeder||{}):null}));
+ s.quadri=s.quadri.map(q=>Object.assign({fasi:3,fase:'auto',pos:'parete',porta:'fume',size:'auto',ris:20,spd:'no',testa:'sez',kc:1,selAmp:'si'},q,{feeder:q.parent?Object.assign({},FEED0,q.feeder||{}):null}));
  s.circ=(s.circ||[]).map(c=>Object.assign({},C0,c));s.inv=(s.inv||[]).map(v=>Object.assign({q:s.quadri[0].id},v));
  s.mod=Object.assign({},d.mod,s.mod);if(s.tmin==null)s.tmin=d.tmin;return s}
 let S; try{S=JSON.parse(localStorage.getItem(LS));S=S?migrate(S):defaults()}catch(e){S=defaults()}
@@ -384,12 +384,14 @@ function calc(){
   if(PacTot>F.P)add('wa',`FV ${f(PacTot,1)} kW > fornitura ${F.P} kW: richiedere potenza in immissione adeguata.`);
   if(tri&&S.inv.some(v=>v.fasi!=3)){const v=Object.values(phG);if(Math.max(...v)-Math.min(...v)>6)add('er','Squilibrio della generazione monofase > 6 kW (CEI 0-21, probabile).')}}
  add('in','Sistema TT: tutto ciò che sta a monte del primo differenziale (montante, quadro generale, linee di alimentazione dei sottoquadri senza differenziale) va realizzato in classe II: cavi con guaina in tubo isolante, centralini in classe II (CEI 64-8 sez. 413). I centralini Gewiss del tool sono in classe II.');
+ const feedIb=k=>{const fq=byId[k.parent]._fasi,fk=k._fasi;return Math.max(fk==3?maxPh(k._load.c):(fq==3?k._load.c[k._fase]:k._load.c.L1),fk==3?maxPh(k._load.g):(fq==3?k._load.g[k._fase]:k._load.g.L1))};
  // ---- Stima della protezione più grande in un quadro (per la selettività amperometrica)
  function estMaxIn(q){let mx=0;
   S.circ.filter(c=>c.q===q.id).forEach(c=>{const T=TIPI[c.tipo]||TIPI.generico;let rcd=(c.fasi==3&&T.rcd3)?T.rcd3:T.rcd;if(c.tipo==='wallbox'&&c.rdc!=='si')rcd='A[EV]';if(c.idt&&c.idt!=='auto')rcd=c.idt;
    const s=pickProt({Ib:ibC(c),fasi:c.fasi,rcd,idn:30,curve:c.curva,T:F.tq,Icc:1,minIn:T.minIn,gen:null});if(s)mx=Math.max(mx,s.In)});
   S.inv.filter(v=>v.q===q.id).forEach(v=>{const s=pickProt({Ib:v.iac,fasi:v.fasi,rcd:v.rcd,idn:+v.idn,curve:v.curva,T:F.tq,Icc:1,minIn:6,maxIn:v.ocpd,gen:null});if(s)mx=Math.max(mx,s.In)});
-  kids(q.id).forEach(k=>{const m=estMaxIn(k);const n=k.feeder.selAmp!=='no'?(STD_IN.find(x=>x>m)||63):m;mx=Math.max(mx,n)});
+  kids(q.id).forEach(k=>{const m=estMaxIn(k);const n=k.feeder.selAmp!=='no'?(STD_IN.find(x=>x>m)||63):6;
+   const fs=pickProt({Ib:feedIb(k),fasi:k._fasi,rcd:k.feeder.rcd==='S'?'A[S]':'none',idn:300,curve:k.feeder.curva,T:F.tq,Icc:1,minIn:n,gen:null});mx=Math.max(mx,fs?fs.In:n)});
   return mx}
  // ---- Elaborazione dei quadri (dall'alto)
  function procQ(q,sup,up,dvUp,feedLine){
@@ -398,7 +400,10 @@ function calc(){
   if(q===root){
    const IbC=tri?F.P*1000*1.1/(Math.sqrt(3)*400*0.95):F.P*1000*1.1/(230*0.95),IbPh=maxPh(q._load.c),IbG=Math.max(IbC,IbPh,maxPh(q._load.g));
    if(IbPh>IbC*1.02)add('wa',`Quadro generale: la fase più carica (${f(IbPh,1)} A con Kc ${q.kc}) supera la corrente di contratto equilibrata (${f(IbC,1)} A). Generale dimensionato sulla fase più carica; riequilibrare le fasi o ridurre Kc se realistico.`);
-   for(const ser of['MT 60','MT 100']){if(SERI[ser].icn<sup.IccQ)continue;head=DEV.filter(d=>d.ser===ser&&d.poles===po&&d.curve==='C').sort((a,b)=>a.In-b.In).find(d=>inEff('MT',d.In,F.tq)>=IbG);if(head)break}
+   const mxDn=q.selAmp!=='no'?estMaxIn(q):0,minG=mxDn?(STD_IN.find(x=>x>mxDn)||99):0;
+   for(const ser of['MT 60','MT 100']){if(SERI[ser].icn<sup.IccQ)continue;head=DEV.filter(d=>d.ser===ser&&d.poles===po&&d.curve==='C').sort((a,b)=>a.In-b.In).find(d=>inEff('MT',d.In,F.tq)>=IbG&&d.In>=minG);if(head)break}
+   if(mxDn)Rq.trace.push(`Selettività sul sovraccarico verso le linee: protezione più grande a valle ${mxDn} A → generale In ≥ ${minG} A`);
+   if(head&&head.In>IbC*1.3)add('in',`Generale In ${head.In} A > corrente di contratto ${f(IbC,1)} A: scelto per la selettività sulle linee a valle; la potenza resta limitata dal contatore. Disattivabile nel tab Quadri.`);
    Rq.trace.push(`Ib prelievo = 1,1·Pcontr/(${tri?'√3·400':'230'}·0,95) = ${f(IbC,1)} A (+10% tollerato dal limitatore, ipotesi); immissione FV max per fase ${f(maxPh(q._load.g),1)} A`);
    Rq.trace.push(`Corrente per fase a valle (con Ku e Kc ${q.kc}): ${['L1','L2','L3'].slice(0,tri?3:1).map(p=>p+' '+f(q._load.c[p],1)+' A').join(', ')} → Ib generale = ${f(IbG,1)} A`);
    if(!head){add('er',`Nessun interruttore generale modulare (MT 60/MT 100, max 63 A) per Ib ${f(IbG,1)} A e Icc ${f(sup.IccQ,2)} kA: ridurre la contemporaneità Kc del quadro generale se realistico, oppure serve un generale scatolato (fuori campo del tool).`);}
@@ -442,7 +447,7 @@ function calc(){
   const children=kids(q.id);
   children.forEach(k=>{
    const fd=k.feeder,fk=k._fasi;
-   const Ib=Math.max(fk==3?maxPh(k._load.c):(fq==3?k._load.c[k._fase]:k._load.c.L1),fk==3?maxPh(k._load.g):(fq==3?k._load.g[k._fase]:k._load.g.L1));
+   const Ib=feedIb(k);
    const rcd=fd.rcd==='S'?'A[S]':'none';
    const mxDn=estMaxIn(k),minF=fd.selAmp!=='no'?(STD_IN.find(x=>x>mxDn)||63):6;
    const r=sizeLine({nome:'Linea → '+k.nome,Ib,ibTxt:`Σ correnti del quadro "${k.nome}" sulla fase più carica × Kc ${k.kc} = ${f(Ib,2)} A (o immissione FV se maggiore)`,fasi:fk,L:fd.L,posa:fd.posa,iso:fd.iso,grup:fd.grup,tAmb:fd.tAmb,curva:fd.curva,dvMax:fd.dv,dvUp:0,minIn:minF,minS:2.5,cos:0.95,rcd,idn:300},sup,F,buDev);
@@ -505,7 +510,7 @@ function calc(){
  procQ(root,supplyRoot(F),null,0,null);
  // verifiche globali
  Object.values(R.Q).forEach(Rq=>Rq.lines.forEach(l=>{if(l.idn&&F.ra*l.idn/1000>50)add('er',`${l.nome}: Ra·IΔn = ${f(F.ra*l.idn/1000,1)} V > 50 V.`)}));
- if(tri){const v=Object.values(ph);const sq=Math.max(...v)-Math.min(...v);if(sq>3)add('wa',`Squilibrio tra le fasi (P·Ku·Kc): ${['L1','L2','L3'].map(k=>k+' '+f(ph[k],1)+' kW').join(', ')}. Con soli due quadri monofase una fase resta senza carichi monofase: spostare un circuito pesante (induzione, boiler) su quella fase o alimentare un quadro casa in trifase.`)}
+ if(tri){const v=Object.values(ph);const sq=Math.max(...v)-Math.min(...v);if(sq>3)add('wa',`Squilibrio tra le fasi (P·Ku·Kc): ${['L1','L2','L3'].map(k=>k+' '+f(ph[k],1)+' kW').join(', ')}. Riequilibrare assegnando a mano la fase dei quadri o dei circuiti monofase (tab Quadri / Circuiti), oppure alimentare in trifase un quadro molto carico.`)}
  if(R.box.length){const m=R.box.reduce((a,b)=>a+b.mods*b.q,0),p=R.box.reduce((a,b)=>a+b.p*b.q,0)*1.2,e=ENC.esterno.t.find(x=>x.mod>=m*1.2);R.boxQ={m,p,e,ok:e&&e.p>=p};if(!e)add('er','String box oltre 36 moduli.');else if(!R.boxQ.ok)add('er','String box: potenza dissipata oltre il centralino.')}
  R.root=root.id;R.sup=R.Q[root.id].sup;
  return R;
@@ -569,6 +574,7 @@ function renderQd(){
   ${inp(p+'ris',{l:'Riserva moduli (%)'})}
   ${inp(p+'spd',{l:'SPD tipo 2',sel:SEL_SN})}
   ${inp(p+'kc',{l:'Contemporaneità Kc',h:'Applicata alla somma dei carichi del quadro'})}
+  ${isRoot?inp(p+'selAmp',{l:'Generale selettivo sulle linee',sel:[['si','Sì — In > protezioni a valle'],['no','No — solo sul contratto']]}):''}
   ${isRoot?'':inp(p+'testa',{l:'Dispositivo di testa',sel:[['sez','Sezionatore (linea protetta a monte)'],['mt','Magnetotermico']]})}
   </div>
   ${isRoot?'':`<h3>Linea di alimentazione da "${esc(qName(q.parent))}"</h3><div class="grid">
@@ -662,7 +668,7 @@ function renderRis(R){const F=S.forn;
  $('#t-ris').innerHTML=`<div class="card"><h2>Esito — ${esc(F.cliente||'Impianto')}</h2>
  <div class="kpi"><div><span>Generale</span><b>${RG.head?.dev?RG.head.dev.poles+' C'+RG.head.In+' · '+RG.head.Icn+' kA':'—'}</b><span>${RG.head?.dev?.code||''}</span></div>
  <div><span>Quadri</span><b>${R.order.length}</b><span>${R.order.map(id=>R.Q[id].enc?R.Q[id].enc.mod:'?').join(' + ')} moduli</span></div>
- <div><span>Carichi per fase (P·Ku·Kc)</span><b>${F.fasi==3?['L1','L2','L3'].map(k=>f(R.ph[k],1)).join(' / '):f(R.ph.L1,1)} kW</b><span>contratto ${F.P} kW</span></div>
+ <div><span>Carichi per fase (P·Ku·Kc sottoquadri)</span><b>${F.fasi==3?['L1','L2','L3'].map(k=>f(R.ph[k],1)).join(' / '):f(R.ph.L1,1)} kW</b><span>contratto ${F.P} kW</span></div>
  <div><span>Esito verifiche</span><b class="${nE?'er':nW?'wa':'ok'}">${nE?nE+' errori':nW?nW+' da verificare':'Conforme'}</b><span>${nW} avvisi</span></div></div>
  <h3>Messaggi</h3>${msgs.map(m=>`<div class="msg ${m[0]}">${m[0]==='er'?'✗ ':m[0]==='wa'?'⚠ ':'ℹ '}${esc(m[1])}</div>`).join('')}</div>
  ${cards}
