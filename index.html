@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dimensionatore Quadri BT</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--tx:#1b1f24;--mu:#5d6773;--bd:#d9dde3;--ac:#0b5cad;--ok:#1d7a3a;--wa:#a86a00;--er:#b3261e;--in:#3a5a80;--th:#eef1f5}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171b;--card:#1d2227;--tx:#e6e9ed;--mu:#9aa4af;--bd:#333a42;--ac:#5aa2ef;--ok:#5fc27e;--wa:#e0a640;--er:#ef6b62;--in:#8fb3dc;--th:#252b32}}
+:root[data-theme="dark"]{--bg:#14171b;--card:#1d2227;--tx:#e6e9ed;--mu:#9aa4af;--bd:#333a42;--ac:#5aa2ef;--ok:#5fc27e;--wa:#e0a640;--er:#ef6b62;--in:#8fb3dc;--th:#252b32}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:14px 16px;background:var(--card);border-bottom:1px solid var(--bd);display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+header h1{font-size:18px;margin:0}
+header small{color:var(--mu);display:block}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+button{background:var(--ac);color:#fff;border:0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer}
+button.sec{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+button.del{background:transparent;color:var(--er);border:1px solid var(--er);padding:3px 8px}
+nav{display:flex;gap:2px;overflow-x:auto;padding:0 16px;background:var(--card);border-bottom:1px solid var(--bd)}
+nav button{background:none;color:var(--mu);border-radius:0;border-bottom:3px solid transparent;white-space:nowrap}
+nav button.on{color:var(--ac);border-bottom-color:var(--ac);font-weight:600}
+main{max-width:1300px;margin:0 auto;padding:16px}
+.tab{display:none}.tab.on{display:block}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:14px;margin-bottom:14px}
+.card h2{font-size:15px;margin:0 0 10px}
+.card h3{font-size:14px;margin:14px 0 6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:3px}
+input,select{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:5px;padding:5px 6px;width:100%}
+.hint{font-size:11px;color:var(--mu)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{border:1px solid var(--bd);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--th);font-weight:600}
+td input,td select{min-width:62px;padding:3px 4px}
+td select[data-k$=".q"]{min-width:150px}td input[data-k$=".nome"]{min-width:160px}td select[data-k$=".tipo"]{min-width:160px}
+tr.grp td{background:var(--th);font-weight:600}
+td.n,th.n{text-align:right}
+.ok{color:var(--ok);font-weight:600}.wa{color:var(--wa);font-weight:600}.er{color:var(--er);font-weight:600}
+.msg{padding:6px 10px;border-left:4px solid;margin:4px 0;border-radius:4px;background:var(--bg);color:var(--tx)}
+.msg.er{border-color:var(--er)}.msg.wa{border-color:var(--wa)}.msg.in{border-color:var(--in)}
+.kpi{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.kpi div{background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:8px 10px}
+.kpi b{display:block;font-size:16px}
+.kpi span{font-size:11px;color:var(--mu)}
+details{margin:4px 0}summary{cursor:pointer;color:var(--ac)}
+pre{white-space:pre-wrap;font:12px/1.5 ui-monospace,Consolas,monospace;background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:8px;margin:6px 0}
+.inv{border:1px dashed var(--bd);border-radius:8px;padding:10px;margin-bottom:10px}
+.tag{font-size:11px;padding:1px 6px;border-radius:10px;border:1px solid var(--bd);color:var(--mu);white-space:nowrap}
+code{font:12px ui-monospace,Consolas,monospace;white-space:nowrap}
+svg text{fill:var(--tx);font-family:system-ui,sans-serif}
+.disc{font-size:12px;color:var(--mu)}
+@media (max-width:600px){main{padding:10px}.grid{grid-template-columns:1fr 1fr}}
+@media print{header .btns,nav,.noprint{display:none!important}.tab{display:block!important}body{background:#fff;color:#000}.card{break-inside:avoid;border-color:#999}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Dimensionatore Quadri BT — residenziale e FV ≤ 20 kW</h1>
+  <small>Sistema TT · CEI 64-8 · CEI-UNEL 35024/1 e 35023 · CEI 23-51 · CEI 0-21 · Catalogo tecnico Gewiss Energy 2026-27 · v1.3</small></div>
+  <div class="btns">
+    <button class="sec" onclick="saveLS(true)">Salva</button>
+    <button class="sec" onclick="exportJSON()">Esporta progetto</button>
+    <button class="sec" onclick="document.getElementById('fimp').click()">Importa progetto</button>
+    <input type="file" id="fimp" accept=".json" hidden onchange="importJSON(event)">
+    <select id="tplsel" style="width:auto" onchange="newFromTpl(this.value);this.value=''"><option value="">Nuovo progetto…</option><option value="vuoto">Vuoto — solo quadro generale</option><option value="mono">Modello: monofase con FV</option><option value="tri">Modello: trifase con FV e wallbox</option><option value="villa">Modello: trifase con generale e 4 sottoquadri</option></select>
+    <button onclick="window.print()">Stampa relazione</button>
+  </div>
+</header>
+<nav id="nav"></nav>
+<main>
+<section class="tab noprint" id="t-forn"></section>
+<section class="tab noprint" id="t-qd"></section>
+<section class="tab noprint" id="t-circ"></section>
+<section class="tab noprint" id="t-pv"></section>
+<section class="tab" id="t-ris"></section>
+<section class="tab" id="t-quadro"></section>
+<section class="tab noprint" id="t-db"></section>
+</main>
+<script>
+/* ===================== DATABASE GEWISS (Catalogo tecnico Energy 2026-27) ===================== */
+// [codice, serie, curva, tipo diff, poli, In, IΔn mA, moduli, pagina catalogo]
+const DEV=[["GW92025","MT 60","C","","1P+N",6,0,2,74],["GW92026","MT 60","C","","1P+N",10,0,2,74],["GW92034","MT 60","C","","1P+N",13,0,2,74],["GW92027","MT 60","C","","1P+N",16,0,2,74],["GW92028","MT 60","C","","1P+N",20,0,2,74],["GW92029","MT 60","C","","1P+N",25,0,2,74],["GW92030","MT 60","C","","1P+N",32,0,2,74],["GW92031","MT 60","C","","1P+N",40,0,2,74],["GW92032","MT 60","C","","1P+N",50,0,2,74],["GW92033","MT 60","C","","1P+N",63,0,2,74],["GW92045","MT 60","C","","2P",6,0,2,74],["GW92046","MT 60","C","","2P",10,0,2,74],["GW92054","MT 60","C","","2P",13,0,2,74],["GW92047","MT 60","C","","2P",16,0,2,74],["GW92048","MT 60","C","","2P",20,0,2,74],["GW92049","MT 60","C","","2P",25,0,2,74],["GW92050","MT 60","C","","2P",32,0,2,74],["GW92051","MT 60","C","","2P",40,0,2,74],["GW92052","MT 60","C","","2P",50,0,2,74],["GW92053","MT 60","C","","2P",63,0,2,74],["GW92085","MT 60","C","","4P",6,0,4,75],["GW92086","MT 60","C","","4P",10,0,4,75],["GW92094","MT 60","C","","4P",13,0,4,75],["GW92087","MT 60","C","","4P",16,0,4,75],["GW92088","MT 60","C","","4P",20,0,4,75],["GW92089","MT 60","C","","4P",25,0,4,75],["GW92090","MT 60","C","","4P",32,0,4,75],["GW92091","MT 60","C","","4P",40,0,4,75],["GW92092","MT 60","C","","4P",50,0,4,75],["GW92093","MT 60","C","","4P",63,0,4,75],["GW92245","MT 60","B","","2P",6,0,2,76],["GW92246","MT 60","B","","2P",10,0,2,76],["GW92254","MT 60","B","","2P",13,0,2,76],["GW92247","MT 60","B","","2P",16,0,2,76],["GW92248","MT 60","B","","2P",20,0,2,76],["GW92249","MT 60","B","","2P",25,0,2,76],["GW92250","MT 60","B","","2P",32,0,2,76],["GW92251","MT 60","B","","2P",40,0,2,76],["GW92252","MT 60","B","","2P",50,0,2,76],["GW92253","MT 60","B","","2P",63,0,2,76],["GW92285","MT 60","B","","4P",6,0,4,76],["GW92286","MT 60","B","","4P",10,0,4,76],["GW92294","MT 60","B","","4P",13,0,4,76],["GW92287","MT 60","B","","4P",16,0,4,76],["GW92288","MT 60","B","","4P",20,0,4,76],["GW92289","MT 60","B","","4P",25,0,4,76],["GW92290","MT 60","B","","4P",32,0,4,76],["GW92291","MT 60","B","","4P",40,0,4,76],["GW92292","MT 60","B","","4P",50,0,4,76],["GW92293","MT 60","B","","4P",63,0,4,76],["GW92445","MT 60","D","","2P",6,0,2,77],["GW92446","MT 60","D","","2P",10,0,2,77],["GW92454","MT 60","D","","2P",13,0,2,77],["GW92447","MT 60","D","","2P",16,0,2,77],["GW92448","MT 60","D","","2P",20,0,2,77],["GW92449","MT 60","D","","2P",25,0,2,77],["GW92450","MT 60","D","","2P",32,0,2,77],["GW92451","MT 60","D","","2P",40,0,2,77],["GW92485","MT 60","D","","4P",6,0,4,77],["GW92486","MT 60","D","","4P",10,0,4,77],["GW92494","MT 60","D","","4P",13,0,4,77],["GW92487","MT 60","D","","4P",16,0,4,77],["GW92488","MT 60","D","","4P",20,0,4,77],["GW92489","MT 60","D","","4P",25,0,4,77],["GW92490","MT 60","D","","4P",32,0,4,77],["GW92491","MT 60","D","","4P",40,0,4,77],["GW92645","MT 100","C","","2P",6,0,2,78],["GW92646","MT 100","C","","2P",10,0,2,78],["GW92654","MT 100","C","","2P",13,0,2,78],["GW92647","MT 100","C","","2P",16,0,2,78],["GW92648","MT 100","C","","2P",20,0,2,78],["GW92649","MT 100","C","","2P",25,0,2,78],["GW92650","MT 100","C","","2P",32,0,2,78],["GW92651","MT 100","C","","2P",40,0,2,78],["GW92652","MT 100","C","","2P",50,0,2,78],["GW92653","MT 100","C","","2P",63,0,2,78],["GW92685","MT 100","C","","4P",6,0,4,78],["GW92686","MT 100","C","","4P",10,0,4,78],["GW92694","MT 100","C","","4P",13,0,4,78],["GW92687","MT 100","C","","4P",16,0,4,78],["GW92688","MT 100","C","","4P",20,0,4,78],["GW92689","MT 100","C","","4P",25,0,4,78],["GW92690","MT 100","C","","4P",32,0,4,78],["GW92691","MT 100","C","","4P",40,0,4,78],["GW92692","MT 100","C","","4P",50,0,4,78],["GW92693","MT 100","C","","4P",63,0,4,78],["GW92545","MT 100","B","","2P",6,0,2,79],["GW92546","MT 100","B","","2P",10,0,2,79],["GW92547","MT 100","B","","2P",13,0,2,79],["GW92548","MT 100","B","","2P",16,0,2,79],["GW92549","MT 100","B","","2P",20,0,2,79],["GW92550","MT 100","B","","2P",25,0,2,79],["GW92551","MT 100","B","","2P",32,0,2,79],["GW92552","MT 100","B","","2P",40,0,2,79],["GW92553","MT 100","B","","2P",50,0,2,79],["GW92554","MT 100","B","","2P",63,0,2,79],["GW92585","MT 100","B","","4P",6,0,4,79],["GW92586","MT 100","B","","4P",10,0,4,79],["GW92587","MT 100","B","","4P",13,0,4,79],["GW92588","MT 100","B","","4P",16,0,4,79],["GW92589","MT 100","B","","4P",20,0,4,79],["GW92590","MT 100","B","","4P",25,0,4,79],["GW92591","MT 100","B","","4P",32,0,4,79],["GW92592","MT 100","B","","4P",40,0,4,79],["GW92593","MT 100","B","","4P",50,0,4,79],["GW92594","MT 100","B","","4P",63,0,4,79],["GW92745","MT 100","D","","2P",6,0,2,80],["GW92746","MT 100","D","","2P",10,0,2,80],["GW92754","MT 100","D","","2P",13,0,2,80],["GW92747","MT 100","D","","2P",16,0,2,80],["GW92748","MT 100","D","","2P",20,0,2,80],["GW92749","MT 100","D","","2P",25,0,2,80],["GW92750","MT 100","D","","2P",32,0,2,80],["GW92751","MT 100","D","","2P",40,0,2,80],["GW92785","MT 100","D","","4P",6,0,4,80],["GW92786","MT 100","D","","4P",10,0,4,80],["GW92794","MT 100","D","","4P",13,0,4,80],["GW92787","MT 100","D","","4P",16,0,4,80],["GW92788","MT 100","D","","4P",20,0,4,80],["GW92789","MT 100","D","","4P",25,0,4,80],["GW92790","MT 100","D","","4P",32,0,4,80],["GW92791","MT 100","D","","4P",40,0,4,80],["GW94305","MDC 60","C","A","1P+N",6,30,2,117],["GW94306","MDC 60","C","A","1P+N",10,30,2,117],["GW94311","MDC 60","C","A","1P+N",13,30,2,117],["GW94307","MDC 60","C","A","1P+N",16,30,2,117],["GW94308","MDC 60","C","A","1P+N",20,30,2,117],["GW94309","MDC 60","C","A","1P+N",25,30,2,117],["GW94310","MDC 60","C","A","1P+N",32,30,2,117],["GW94315","MDC 60","C","A","1P+N",6,300,2,117],["GW94316","MDC 60","C","A","1P+N",10,300,2,117],["GW94317","MDC 60","C","A","1P+N",16,300,2,117],["GW94318","MDC 60","C","A","1P+N",20,300,2,117],["GW94319","MDC 60","C","A","1P+N",25,300,2,117],["GW94320","MDC 60","C","A","1P+N",32,300,2,117],["GW94325","MDC 60","C","A","2P",6,30,2,117],["GW94326","MDC 60","C","A","2P",10,30,2,117],["GW94331","MDC 60","C","A","2P",13,30,2,117],["GW94327","MDC 60","C","A","2P",16,30,2,117],["GW94328","MDC 60","C","A","2P",20,30,2,117],["GW94329","MDC 60","C","A","2P",25,30,2,117],["GW94330","MDC 60","C","A","2P",32,30,2,117],["GW94335","MDC 60","C","A","2P",6,300,2,117],["GW94336","MDC 60","C","A","2P",10,300,2,117],["GW94337","MDC 60","C","A","2P",16,300,2,117],["GW94338","MDC 60","C","A","2P",20,300,2,117],["GW94339","MDC 60","C","A","2P",25,300,2,117],["GW94340","MDC 60","C","A","2P",32,300,2,117],["GW94345","MDC 60","C","A","3P",6,30,3,117],["GW94346","MDC 60","C","A","3P",10,30,3,117],["GW94351","MDC 60","C","A","3P",13,30,3,117],["GW94347","MDC 60","C","A","3P",16,30,3,117],["GW94348","MDC 60","C","A","3P",20,30,3,117],["GW94349","MDC 60","C","A","3P",25,30,3,117],["GW94350","MDC 60","C","A","3P",32,30,3,117],["GW94355","MDC 60","C","A","3P",6,300,3,117],["GW94356","MDC 60","C","A","3P",10,300,3,117],["GW94357","MDC 60","C","A","3P",16,300,3,117],["GW94358","MDC 60","C","A","3P",20,300,3,117],["GW94359","MDC 60","C","A","3P",25,300,3,117],["GW94360","MDC 60","C","A","3P",32,300,3,117],["GW94365","MDC 60","C","A","4P",6,30,4,117],["GW94366","MDC 60","C","A","4P",10,30,4,117],["GW94371","MDC 60","C","A","4P",13,30,4,117],["GW94367","MDC 60","C","A","4P",16,30,4,117],["GW94368","MDC 60","C","A","4P",20,30,4,117],["GW94369","MDC 60","C","A","4P",25,30,4,117],["GW94370","MDC 60","C","A","4P",32,30,4,117],["GW94375","MDC 60","C","A","4P",6,300,4,117],["GW94376","MDC 60","C","A","4P",10,300,4,117],["GW94377","MDC 60","C","A","4P",16,300,4,117],["GW94378","MDC 60","C","A","4P",20,300,4,117],["GW94379","MDC 60","C","A","4P",25,300,4,117],["GW94380","MDC 60","C","A","4P",32,300,4,117],["GW95805","MDC 60","C","A[IR]","2P",6,30,2,118],["GW95806","MDC 60","C","A[IR]","2P",10,30,2,118],["GW95811","MDC 60","C","A[IR]","2P",13,30,2,118],["GW95807","MDC 60","C","A[IR]","2P",16,30,2,118],["GW95808","MDC 60","C","A[IR]","2P",20,30,2,118],["GW95809","MDC 60","C","A[IR]","2P",25,30,2,118],["GW95810","MDC 60","C","A[IR]","2P",32,30,2,118],["GW95815","MDC 60","C","A[IR]","4P",6,30,4,118],["GW95816","MDC 60","C","A[IR]","4P",10,30,4,118],["GW95821","MDC 60","C","A[IR]","4P",13,30,4,118],["GW95817","MDC 60","C","A[IR]","4P",16,30,4,118],["GW95818","MDC 60","C","A[IR]","4P",20,30,4,118],["GW95819","MDC 60","C","A[IR]","4P",25,30,4,118],["GW95820","MDC 60","C","A[IR]","4P",32,30,4,118],["GW95847","MDC 60","C","A[S]","2P",16,300,2,119],["GW95848","MDC 60","C","A[S]","2P",20,300,2,119],["GW95849","MDC 60","C","A[S]","2P",25,300,2,119],["GW95850","MDC 60","C","A[S]","2P",32,300,2,119],["GW95857","MDC 60","C","A[S]","4P",16,300,4,119],["GW95858","MDC 60","C","A[S]","4P",20,300,4,119],["GW95859","MDC 60","C","A[S]","4P",25,300,4,119],["GW95860","MDC 60","C","A[S]","4P",32,300,4,119],["GW95935","MDC 60","C","F","2P",6,30,2,119],["GW95936","MDC 60","C","F","2P",10,30,2,119],["GW95941","MDC 60","C","F","2P",13,30,2,119],["GW95937","MDC 60","C","F","2P",16,30,2,119],["GW95938","MDC 60","C","F","2P",20,30,2,119],["GW95939","MDC 60","C","F","2P",25,30,2,119],["GW95940","MDC 60","C","F","2P",32,30,2,119],["GW95105","MDC 60","B","A","1P+N",6,30,2,120],["GW95106","MDC 60","B","A","1P+N",10,30,2,120],["GW95111","MDC 60","B","A","1P+N",13,30,2,120],["GW95107","MDC 60","B","A","1P+N",16,30,2,120],["GW95108","MDC 60","B","A","1P+N",20,30,2,120],["GW95109","MDC 60","B","A","1P+N",25,30,2,120],["GW95110","MDC 60","B","A","1P+N",32,30,2,120],["GW95115","MDC 60","B","A","1P+N",6,300,2,120],["GW95116","MDC 60","B","A","1P+N",10,300,2,120],["GW95117","MDC 60","B","A","1P+N",16,300,2,120],["GW95118","MDC 60","B","A","1P+N",20,300,2,120],["GW95119","MDC 60","B","A","1P+N",25,300,2,120],["GW95120","MDC 60","B","A","1P+N",32,300,2,120],["GW95125","MDC 60","B","A","2P",6,30,2,120],["GW95126","MDC 60","B","A","2P",10,30,2,120],["GW95131","MDC 60","B","A","2P",13,30,2,120],["GW95127","MDC 60","B","A","2P",16,30,2,120],["GW95128","MDC 60","B","A","2P",20,30,2,120],["GW95129","MDC 60","B","A","2P",25,30,2,120],["GW95130","MDC 60","B","A","2P",32,30,2,120],["GW95135","MDC 60","B","A","2P",6,300,2,120],["GW95136","MDC 60","B","A","2P",10,300,2,120],["GW95137","MDC 60","B","A","2P",16,300,2,120],["GW95138","MDC 60","B","A","2P",20,300,2,120],["GW95139","MDC 60","B","A","2P",25,300,2,120],["GW95140","MDC 60","B","A","2P",32,300,2,120],["GW95145","MDC 60","B","A","3P",6,30,3,120],["GW95146","MDC 60","B","A","3P",10,30,3,120],["GW95151","MDC 60","B","A","3P",13,30,3,120],["GW95147","MDC 60","B","A","3P",16,30,3,120],["GW95148","MDC 60","B","A","3P",20,30,3,120],["GW95149","MDC 60","B","A","3P",25,30,3,120],["GW95150","MDC 60","B","A","3P",32,30,3,120],["GW95155","MDC 60","B","A","3P",6,300,3,120],["GW95156","MDC 60","B","A","3P",10,300,3,120],["GW95157","MDC 60","B","A","3P",16,300,3,120],["GW95158","MDC 60","B","A","3P",20,300,3,120],["GW95159","MDC 60","B","A","3P",25,300,3,120],["GW95160","MDC 60","B","A","3P",32,300,3,120],["GW95165","MDC 60","B","A","4P",6,30,4,120],["GW95166","MDC 60","B","A","4P",10,30,4,120],["GW95171","MDC 60","B","A","4P",13,30,4,120],["GW95167","MDC 60","B","A","4P",16,30,4,120],["GW95168","MDC 60","B","A","4P",20,30,4,120],["GW95169","MDC 60","B","A","4P",25,30,4,120],["GW95170","MDC 60","B","A","4P",32,30,4,120],["GW95175","MDC 60","B","A","4P",6,300,4,120],["GW95176","MDC 60","B","A","4P",10,300,4,120],["GW95177","MDC 60","B","A","4P",16,300,4,120],["GW95178","MDC 60","B","A","4P",20,300,4,120],["GW95179","MDC 60","B","A","4P",25,300,4,120],["GW95180","MDC 60","B","A","4P",32,300,4,120],["GW95975","MDC 60","B","F","2P",6,30,2,121],["GW95976","MDC 60","B","F","2P",10,30,2,121],["GW95981","MDC 60","B","F","2P",13,30,2,121],["GW95977","MDC 60","B","F","2P",16,30,2,121],["GW95978","MDC 60","B","F","2P",20,30,2,121],["GW95979","MDC 60","B","F","2P",25,30,2,121],["GW95980","MDC 60","B","F","2P",32,30,2,121],["GW95225","MDC 100","C","A","2P",6,30,2,122],["GW95226","MDC 100","C","A","2P",10,30,2,122],["GW95231","MDC 100","C","A","2P",13,30,2,122],["GW95227","MDC 100","C","A","2P",16,30,2,122],["GW95228","MDC 100","C","A","2P",20,30,2,122],["GW95229","MDC 100","C","A","2P",25,30,2,122],["GW95230","MDC 100","C","A","2P",32,30,2,122],["GW95785","MDC 100","C","A","2P",6,100,2,122],["GW95786","MDC 100","C","A","2P",10,100,2,122],["GW95791","MDC 100","C","A","2P",13,100,2,122],["GW95787","MDC 100","C","A","2P",16,100,2,122],["GW95788","MDC 100","C","A","2P",20,100,2,122],["GW95789","MDC 100","C","A","2P",25,100,2,122],["GW95790","MDC 100","C","A","2P",32,100,2,122],["GW95235","MDC 100","C","A","2P",6,300,2,122],["GW95236","MDC 100","C","A","2P",10,300,2,122],["GW95237","MDC 100","C","A","2P",16,300,2,122],["GW95238","MDC 100","C","A","2P",20,300,2,122],["GW95239","MDC 100","C","A","2P",25,300,2,122],["GW95240","MDC 100","C","A","2P",32,300,2,122],["GW95245","MDC 100","C","A","3P",6,30,3,122],["GW95246","MDC 100","C","A","3P",10,30,3,122],["GW95247","MDC 100","C","A","3P",16,30,3,122],["GW95248","MDC 100","C","A","3P",20,30,3,122],["GW95249","MDC 100","C","A","3P",25,30,3,122],["GW95250","MDC 100","C","A","3P",32,30,3,122],["GW95825","MDC 100","C","A[IR]","2P",6,30,2,123],["GW95826","MDC 100","C","A[IR]","2P",10,30,2,123],["GW95831","MDC 100","C","A[IR]","2P",13,30,2,123],["GW95827","MDC 100","C","A[IR]","2P",16,30,2,123],["GW95828","MDC 100","C","A[IR]","2P",20,30,2,123],["GW95829","MDC 100","C","A[IR]","2P",25,30,2,123],["GW95830","MDC 100","C","A[IR]","2P",32,30,2,123],["GW95955","MDC 100","C","F","2P",6,30,2,124],["GW95956","MDC 100","C","F","2P",10,30,2,124],["GW95961","MDC 100","C","F","2P",13,30,2,124],["GW95957","MDC 100","C","F","2P",16,30,2,124],["GW95958","MDC 100","C","F","2P",20,30,2,124],["GW95959","MDC 100","C","F","2P",25,30,2,124],["GW95960","MDC 100","C","F","2P",32,30,2,124],["GW95325","MDC 100","B","A","2P",6,30,2,124],["GW95326","MDC 100","B","A","2P",10,30,2,124],["GW95331","MDC 100","B","A","2P",13,30,2,124],["GW95327","MDC 100","B","A","2P",16,30,2,124],["GW95328","MDC 100","B","A","2P",20,30,2,124],["GW95329","MDC 100","B","A","2P",25,30,2,124],["GW95330","MDC 100","B","A","2P",32,30,2,124],["GW95795","MDC 100","B","A","2P",6,100,2,124],["GW95796","MDC 100","B","A","2P",10,100,2,124],["GW95801","MDC 100","B","A","2P",13,100,2,124],["GW95797","MDC 100","B","A","2P",16,100,2,124],["GW95798","MDC 100","B","A","2P",20,100,2,124],["GW95799","MDC 100","B","A","2P",25,100,2,124],["GW95800","MDC 100","B","A","2P",32,100,2,124],["GW95335","MDC 100","B","A","2P",6,300,2,124],["GW95336","MDC 100","B","A","2P",10,300,2,124],["GW95337","MDC 100","B","A","2P",16,300,2,124],["GW95338","MDC 100","B","A","2P",20,300,2,124],["GW95339","MDC 100","B","A","2P",25,300,2,124],["GW95340","MDC 100","B","A","2P",32,300,2,124],["GW95835","MDC 100","B","A[IR]","2P",6,30,2,125],["GW95836","MDC 100","B","A[IR]","2P",10,30,2,125],["GW95841","MDC 100","B","A[IR]","2P",13,30,2,125],["GW95837","MDC 100","B","A[IR]","2P",16,30,2,125],["GW95838","MDC 100","B","A[IR]","2P",20,30,2,125],["GW95839","MDC 100","B","A[IR]","2P",25,30,2,125],["GW95840","MDC 100","B","A[IR]","2P",32,30,2,125],["GW95965","MDC 100","B","F","2P",6,30,2,125],["GW95966","MDC 100","B","F","2P",10,30,2,125],["GW95971","MDC 100","B","F","2P",13,30,2,125],["GW95967","MDC 100","B","F","2P",16,30,2,125],["GW95968","MDC 100","B","F","2P",20,30,2,125],["GW95969","MDC 100","B","F","2P",25,30,2,125],["GW95970","MDC 100","B","F","2P",32,30,2,125],["GW94502","BD","","A","2P",25,30,2,126],["GW94503","BD","","A","2P",25,300,2,126],["GW94504","BD","","A","2P",25,500,2,126],["GW94512","BD","","A","2P",63,30,2,126],["GW94513","BD","","A","2P",63,300,2,126],["GW94514","BD","","A","2P",63,500,2,126],["GW94542","BD","","A","3P",25,30,3.5,126],["GW94543","BD","","A","3P",25,300,3.5,126],["GW94544","BD","","A","3P",25,500,3.5,126],["GW94547","BD","","A","3P",63,30,3.5,126],["GW94548","BD","","A","3P",63,300,3.5,126],["GW94549","BD","","A","3P",63,500,3.5,126],["GW94522","BD","","A","4P",25,30,3.5,126],["GW94523","BD","","A","4P",25,300,3.5,126],["GW94524","BD","","A","4P",25,500,3.5,126],["GW94532","BD","","A","4P",63,30,3.5,126],["GW94533","BD","","A","4P",63,300,3.5,126],["GW94534","BD","","A","4P",63,500,3.5,126],["GW94566","BD","","A[IR]","2P",63,30,2,127],["GW94595","BD","","A[IR]","3P",63,30,3.5,127],["GW94586","BD","","A[IR]","4P",63,30,3.5,127],["GW94563","BD","","A[S]","2P",63,300,2,127],["GW94565","BD","","A[S]","2P",63,1000,2,127],["GW94598","BD","","A[S]","3P",63,300,3.5,127],["GW94600","BD","","A[S]","3P",63,1000,3.5,127],["GW94583","BD","","A[S]","4P",63,300,3.5,127],["GW94585","BD","","A[S]","4P",63,1000,3.5,127],["GWD4011","IDP","","A","2P",25,10,2,131],["GWD4012","IDP","","A","2P",25,30,2,131],["GWD4013","IDP","","A","2P",25,100,2,131],["GWD4014","IDP","","A","2P",25,300,2,131],["GWD4032","IDP","","A","2P",40,30,2,131],["GWD4033","IDP","","A","2P",40,100,2,131],["GWD4034","IDP","","A","2P",40,300,2,131],["GWD4035","IDP","","A","2P",40,500,2,131],["GWD4052","IDP","","A","2P",63,30,2,131],["GWD4053","IDP","","A","2P",63,100,2,131],["GWD4054","IDP","","A","2P",63,300,2,131],["GWD4055","IDP","","A","2P",63,500,2,131],["GW94867","IDP","","A","4P",25,30,3,131],["GW94869","IDP","","A","4P",25,300,3,131],["GW94897","IDP","","A","4P",40,30,3,131],["GW94898","IDP","","A","4P",40,100,3,131],["GW94899","IDP","","A","4P",40,300,3,131],["GW94900","IDP","","A","4P",40,500,3,131],["GWD4111","IDP","","A","4P",25,10,4,131],["GWD4112","IDP","","A","4P",25,30,4,131],["GWD4113","IDP","","A","4P",25,100,4,131],["GWD4114","IDP","","A","4P",25,300,4,131],["GWD4132","IDP","","A","4P",40,30,4,131],["GWD4133","IDP","","A","4P",40,100,4,131],["GWD4134","IDP","","A","4P",40,300,4,131],["GWD4135","IDP","","A","4P",40,500,4,131],["GWD4152","IDP","","A","4P",63,30,4,131],["GWD4153","IDP","","A","4P",63,100,4,131],["GWD4154","IDP","","A","4P",63,300,4,131],["GWD4155","IDP","","A","4P",63,500,4,131],["GWD4202","IDP","","A[IR]","2P",25,30,2,132],["GWD4203","IDP","","A[IR]","2P",25,300,2,132],["GWD4205","IDP","","A[IR]","2P",40,30,2,132],["GWD4206","IDP","","A[IR]","2P",40,300,2,132],["GWD4208","IDP","","A[IR]","2P",63,30,2,132],["GWD4209","IDP","","A[IR]","2P",63,300,2,132],["GWD4217","IDP","","A[IR]","4P",25,30,4,132],["GWD4218","IDP","","A[IR]","4P",25,300,4,132],["GWD4220","IDP","","A[IR]","4P",40,30,4,132],["GWD4221","IDP","","A[IR]","4P",40,300,4,132],["GWD4223","IDP","","A[IR]","4P",63,30,4,132],["GWD4224","IDP","","A[IR]","4P",63,300,4,132],["GWD4234","IDP","","A[S]","2P",40,300,2,132],["GWD4235","IDP","","A[S]","2P",40,500,2,132],["GWD4237","IDP","","A[S]","2P",63,300,2,132],["GWD4238","IDP","","A[S]","2P",63,500,2,132],["GWD4249","IDP","","A[S]","4P",40,300,4,132],["GWD4250","IDP","","A[S]","4P",40,500,4,132],["GWD4252","IDP","","A[S]","4P",63,300,4,132],["GWD4253","IDP","","A[S]","4P",63,500,4,132],["GWD4562","IDP","","A[EV]","2P",40,30,4,133],["GWD4567","IDP","","A[EV]","4P",40,30,4,133],["GWD4261","IDP","","F","2P",25,30,2,134],["GWD4265","IDP","","F","2P",40,30,2,134],["GWD4269","IDP","","F","2P",63,30,2,134],["GWD4281","IDP","","F","4P",25,30,4,134],["GWD4285","IDP","","F","4P",40,30,4,134],["GWD4289","IDP","","F","4P",63,30,4,134],["GWD4502","IDP","","B","2P",25,30,4,134],["GWD4504","IDP","","B","2P",25,300,4,134],["GWD4507","IDP","","B","2P",40,30,4,134],["GWD4509","IDP","","B","2P",40,300,4,134],["GWD4512","IDP","","B","2P",63,30,4,134],["GWD4514","IDP","","B","2P",63,300,4,134],["GWD4527","IDP","","B","4P",25,30,4,134],["GWD4529","IDP","","B","4P",25,300,4,134],["GWD4532","IDP","","B","4P",40,30,4,134],["GWD4534","IDP","","B","4P",40,300,4,134],["GWD4537","IDP","","B","4P",63,30,4,134],["GWD4539","IDP","","B","4P",63,300,4,134]].map(r=>({code:r[0],ser:r[1],curve:r[2],rcd:r[3],poles:r[4],In:r[5],idn:r[6],mods:r[7],pg:r[8]}));
+// I²t (A²s) lette dalle curve vettoriali del catalogo a Icc = 1 / 3 / 4,5 / 6 / 10 kA (null = oltre la curva)
+const I2T={"MDC45_2":{"xmax":5765,"env":false,"t":{"32":[3856,10643,15431,null,null],"25":[3332,9474,13903,null,null],"20":[2854,8464,12576,null,null],"13":[2489,7567,11340,null,null],"16":[2489,7567,11340,null,null],"10":[2239,6600,9783,null,null],"6":[1943,5567,8237,null,null]}},"MDC60_2":{"xmax":9588,"env":false,"t":{"32":[3840,10529,15229,19503,null],"25":[3322,9380,13731,17799,null],"20":[2848,8387,12430,16267,null],"13":[2486,7504,11216,14761,null],"16":[2486,7504,11216,14761,null],"10":[2238,6551,9685,12735,null],"6":[1944,5531,8164,10802,null]}},"MDC45_4":{"xmax":7417,"env":false,"t":{"25":[4270,17040,28091,39655,null],"32":[4270,17040,28091,39655,null],"20":[3810,15197,24919,34750,null],"13":[3277,13157,21088,28446,null],"16":[3277,13157,21088,28446,null],"10":[2906,11745,18975,25570,null],"6":[2694,10576,16704,22215,null]}},"MDC60_4":{"xmax":8754,"env":true,"t":{"25":[4318,20290,34570,46442,null],"32":[4318,20290,34570,46442,null],"20":[4318,20290,34570,46442,null],"13":[4318,20290,34570,46442,null],"16":[4318,20290,34570,46442,null],"10":[4318,20290,34570,46442,null],"6":[4318,20290,34570,46442,null]}},"MDC100_2":{"xmax":13627,"env":false,"t":{"32":[3889,10851,15765,20272,31633],"25":[3365,9673,14234,18521,29306],"20":[2886,8654,12901,16917,26731],"13":[2519,7747,11647,15366,24571],"16":[2519,7747,11647,15366,24571],"10":[2267,6756,10052,13263,21413],"6":[1967,5702,8479,11249,18256]}},"MTC60_4":{"xmax":6436,"env":false,"t":{"32":[5045,21006,35379,51718,null],"25":[4411,18781,31739,45016,null],"20":[3941,16747,28140,38992,null],"13":[3404,14439,23690,31025,null],"16":[3404,14439,23690,31025,null],"10":[3020,12928,21389,27753,null],"6":[2803,11591,18727,24053,null]}},"MT60_4":{"xmax":10130,"env":false,"t":{"50":[5044,22762,39081,56142,90983],"63":[5044,22762,39081,56142,90983],"32":[3598,15914,27003,38243,64932],"40":[3598,15914,27003,38243,64932],"25":[2499,10725,18058,25515,44009],"20":[2172,9341,15582,21620,37250],"13":[1916,8060,13403,18663,30095],"16":[1916,8060,13403,18663,30095],"10":[1666,6983,11717,16755,27684],"6":[1442,5220,8284,10981,16121],"3":[624,1784,2660,3522,5423],"4":[624,1784,2660,3522,5423],"1":[343,678,891,1100,1681],"2":[343,678,891,1100,1681]}},"MT60_2":{"xmax":19810,"env":false,"t":{"50":[4144,13756,21419,29278,48355],"63":[4144,13756,21419,29278,48355],"32":[2970,9720,15056,20525,34824],"40":[2970,9720,15056,20525,34824],"25":[2255,5979,8570,11065,17451],"20":[1959,5217,7488,9656,14110],"13":[1808,4806,6894,8881,12743],"16":[1808,4806,6894,8881,12743],"10":[1532,4224,6140,7977,11270],"6":[985,2636,3790,4885,6779],"3":[672,1730,2453,3133,4371],"4":[672,1730,2453,3133,4371],"1":[328,756,1029,1278,1755],"2":[328,756,1029,1278,1755]}},"MT100_4":{"xmax":14735,"env":false,"t":{"50":[4020,16105,26442,36733,56892],"63":[4020,16105,26442,36733,56892],"32":[2993,11783,19133,26314,42424],"40":[2993,11783,19133,26314,42424],"25":[2182,8355,13482,18445,30234],"20":[1924,7403,11838,15976,26192],"13":[1732,6517,10387,14040,21710],"16":[1732,6517,10387,14040,21710],"10":[1536,5745,9238,12769,20176],"6":[1370,4471,6828,8816,12495]}},"MT100_2":{"xmax":24768,"env":false,"t":{"50":[3421,10152,15167,20136,31740],"63":[3421,10152,15167,20136,31740],"32":[2529,7418,11034,14618,23625],"40":[2529,7418,11034,14618,23625],"25":[1971,4777,6622,8351,12614],"20":[1735,4218,5855,7374,10388],"13":[1613,3913,5427,6828,9477],"16":[1613,3913,5427,6828,9477],"10":[1388,3483,4892,6203,8483],"6":[930,2273,3161,3980,5362]}}};
+const I2T_PTS=[1000,3000,4500,6000,10000];
+// Potere di interruzione: Icn = EN 60898-1 / EN 61009-1 (kA), Icu = EN 60947-2 (kA)
+const SERI={'MDC 60':{icn:6,icu:6,pg:'116-121'},'MDC 100':{icn:10,icu:15,pg:'121-125'},'MT 60':{icn:6,icu:10,pg:'74-77'},'MT 100':{icn:10,icu:15,pg:'78-80'}};
+const icnOf=d=>d.ser==='MDC 60'&&d.rcd==='F'?{icn:6,icu:10}:d.ser==='MT 100'&&d.In>25?{icn:10,icu:12.5}:SERI[d.ser];
+// Back-up EN 60947-2 (pag. 724): [valle][tensione][monte] → kA
+const BU={'MDC 60':{400:{MT60:10,MT100a:12,MT100b:10},230:{MT60:12.5}},'MT 60':{400:{MT100a:15,MT100b:12},230:{MT100a:15,MT100b:12.5}}};
+// Declassamento in temperatura (A) — pag. 89-90, 140-141
+const DER={
+ MDC:{T:[10,20,30,40,50,60],v:{6:[7.2,6.6,6,5.7,5.3,5],10:[11.8,10.8,10,9.6,9.1,8.6],13:[14.8,14,13,12.2,11.2,10.3],16:[18.2,17.2,16,15.2,14.3,13.4],20:[22.8,21.4,20,19.5,18.9,18.4],25:[28.5,26.8,25,24,23,22],32:[36.5,34.2,32,30.8,29.5,28.2]}},
+ MT:{T:[10,20,30,40,50,60,70],v:{6:[7.33,6.67,6,5.52,5.03,4.6,4.17],10:[11.6,10.8,10,8.9,7.95,7.16,6.21],13:[14.9,13.9,13,11.9,10.9,10,9],16:[18.1,17.1,16,14.9,13.9,12.8,11.7],20:[22.7,21.3,20,17.8,16.1,15.1,13.5],25:[29.3,27.1,25,23.4,21.3,18.8,16.6],32:[35.6,33.8,32,30,28,26,23],40:[46.7,43.3,40,36.4,32.8,29.2,25.6],50:[60,55,50,45.5,40.5,35.5,30],63:[72.3,67.7,63,59,54.6,50,45.4]}},
+ IDP:{T:[30,40,50,60],v:{25:[25,25,22.5,20],40:[40,40,36,32],63:[63,63,56.7,50.4]}}};
+// Potenze dissipate a In (W) — pag. 89-90, 140-141, contattori, sezionatori DC
+const PD={
+ MT:{BC:{6:1.56,10:1.98,13:1.97,16:2.49,20:2.47,25:2.24,32:3.02,40:3.73,50:4.78,63:4.92},D:{6:.73,10:1.15,13:1.3,16:1.48,20:1.64,25:1.62,32:2.34,40:3.12}},
+ MDC:{6:[1.06,.09],10:[2.06,.26],13:[2.45,.44],16:[2.28,.67],20:[2.72,1.04],25:[2.88,2],32:[3.67,2.66]},
+ BD:{'2P':{6:.04,10:.11,13:.2,16:.29,20:.45,25:.7,32:.45,40:.7,50:1.1,63:1.75},'4P':{6:.07,10:.21,13:.37,16:.53,20:.83,25:1.3,32:.65,40:1,50:1.6,63:2.5}},
+ IDP:{std:{'2P':{25:2.9,40:7.8,63:8.1},'4P':{25:4.4,40:11.7,63:12.2}},evb:{'2P':{25:1,40:2.6,63:6.2},'4P':{25:1.4,40:3.8,63:9.1}}},
+ CTR:{25:2.2,40:4,63:8}};
+// Centralini (schede prodotto Gewiss): potenza dissipabile dichiarata, classe II
+const ENC={
+ parete:{nome:'40 CD da parete IP40',ip:'IP40',t:[{mod:12,c:{fume:'GW40045',cieca:'GW40065'},p:22},{mod:24,c:{fume:'GW40047',cieca:'GW40067'},p:25},{mod:36,c:{fume:'GW40049',cieca:'GW40069'},p:45},{mod:54,c:{fume:'GW40051',cieca:'GW40071'},p:63},{mod:72,c:{fume:'GW40053',cieca:'GW40073'},p:75}]},
+ incasso:{nome:'40 CDI da incasso IP40',ip:'IP40',t:[{mod:12,c:{fume:'GW40605',cieca:'GW40885'},p:36},{mod:24,c:{fume:'GW40606',cieca:'GW40886'},p:37},{mod:36,c:{fume:'GW40609',cieca:'GW40889'},p:52},{mod:54,c:{fume:'GW40610',cieca:'GW40890'},p:62},{mod:72,c:{fume:'GW40611',cieca:'GW40891'},p:95}]},
+ esterno:{nome:'Centralino stagno IP65',ip:'IP65',t:[{mod:12,c:{fume:'GW40103',cieca:'GW40103'},p:26,ver:1},{mod:24,c:{fume:'GW40104',cieca:'GW40104'},p:32,ver:1},{mod:36,c:{fume:'GW40105',cieca:'GW40105'},p:42,ver:1}]}};
+// Interruttori di manovra-sezionatori non accessoriabili (pag. 198, 210): Pdiss per polo a In
+const SD={2:{32:'GW96114',40:'GW96115',63:'GW96116'},4:{32:'GW96134',40:'GW96135',63:'GW96136'}};
+const SDP={32:0.8,40:1.5,63:2};
+const SPDAC={1:{code:'GWD6407',d:'SPD LST tipo 2 1P+N 20 kA 230 V, Up < 1,5 kV',mods:2},3:{code:'GWD6409',d:'SPD LST tipo 2 3P+N 20 kA 400 V, Up < 1,5 kV',mods:4}};
+const CTR={3:{25:'GWD6715',40:'GWD6724',63:'GWD6734'},1:{25:'GWD6712',40:'GWD6721',63:'GWD6731'}};
+const CTRM={25:2,40:3,63:3};
+const GPV=[[6,'GW72131'],[8,'GW72132'],[10,'GW72133'],[12,'GW72134'],[16,'GW72135'],[20,'GW72136']];
+const SEZDC2={500:25,600:25,700:23,800:20,900:16,1000:11};
+
+/* ===================== DATI NORMATIVI ===================== */
+const STD_IN=[6,10,13,16,20,25,32,40,50,63];
+const SEZ=[1.5,2.5,4,6,10,16,25,35];
+const IZ={
+PVC:{A1:{2:[14.5,19.5,26,34,46,61,80,99],3:[13.5,18,24,31,42,56,73,89]},B1:{2:[17.5,24,32,41,57,76,101,125],3:[15.5,21,28,36,50,68,89,110]},B2:{2:[16.5,23,30,38,52,69,90,111],3:[15,20,27,34,46,62,80,99]},C:{2:[19.5,27,36,46,63,85,112,138],3:[17.5,24,32,41,57,76,96,119]},E:{2:[22,30,40,51,70,94,119,148],3:[18.5,25,34,43,60,80,101,126]}},
+XLPE:{A1:{2:[19,26,35,45,61,81,106,131],3:[17,23,31,40,54,73,95,117]},B1:{2:[23,31,42,54,75,100,133,164],3:[20,28,37,48,66,88,117,144]},B2:{2:[22,30,40,51,69,91,119,146],3:[19.5,26,35,44,60,80,105,128]},C:{2:[24,33,45,58,80,107,138,171],3:[22,30,40,52,71,96,119,147]},E:{2:[26,36,49,63,86,115,149,185],3:[23,32,42,54,75,100,127,158]}}};
+const POSE={A1:'A1 – unipolari in tubo, parete isolante',B1:'B1 – unipolari in tubo, muratura',B2:'B2 – multipolare in tubo, muratura',C:'C – multipolare fissato a parete',E:'E – multipolare in aria/passerella'};
+const K1={PVC:{10:1.22,15:1.17,20:1.12,25:1.06,30:1,35:0.94,40:0.87,45:0.79,50:0.71},XLPE:{10:1.15,15:1.12,20:1.08,25:1.04,30:1,35:0.96,40:0.91,45:0.87,50:0.82}};
+const K2={1:1,2:0.8,3:0.7,4:0.65,5:0.6,6:0.57,7:0.54,8:0.52,9:0.5};
+const KAD={PVC:115,XLPE:143};
+const RHO20=0.0178, RHO_DV=0.0225, XL=0.00008;
+const MAG={B:5,C:10,D:20};
+const TIPI={
+ luce:{l:'Illuminazione',rcd:'A',cos:0.95,minS:1.5,minIn:10},
+ prese:{l:'Prese / FM',rcd:'A',cos:0.9,minS:2.5,minIn:16},
+ induzione:{l:'Piano a induzione',rcd:'A',cos:0.98,minS:2.5,minIn:16,note:'Tipo A ammesso dalla maggior parte dei costruttori; alcuni richiedono tipo F: verificare il manuale.'},
+ boiler:{l:'Boiler elettrico',rcd:'A',cos:1,minS:2.5,minIn:10},
+ clima:{l:'Climatizzatore (inverter)',rcd:'F',cos:0.95,minS:2.5,minIn:10,note:'Tipo F consigliato per azionamenti monofase a inverter (CEI 64-8 sez. 531). Tipo A solo se ammesso dal costruttore.'},
+ pdc:{l:'Pompa di calore',rcd:'F',rcd3:'B',cos:0.95,minS:2.5,minIn:16,note:'Monofase: tipo F. Trifase con inverter: tipo B salvo dichiarazione del costruttore che ammetta A/F (in tal caso impostare il tipo a mano).'},
+ wallbox:{l:'Wallbox (CEI 64-8 sez. 722)',rcd:'A',cos:1,minS:2.5,minIn:16,note:'Differenziale dedicato per ogni punto di ricarica, IΔn ≤ 30 mA. Se la wallbox non integra RDC-DD 6 mA DC: differenziale A[EV] (rileva componenti DC > 6 mA) oppure tipo B.'},
+ prese_cucina:{l:'Prese cucina',rcd:'A',cos:0.95,minS:2.5,minIn:16},
+ forno:{l:'Forno',rcd:'A',cos:1,minS:2.5,minIn:16},
+ lavatrice:{l:'Lavatrice / asciugatrice',rcd:'A',cos:0.95,minS:2.5,minIn:16,note:'Alcuni modelli con motore a inverter richiedono tipo F: verificare il manuale.'},
+ lavastoviglie:{l:'Lavastoviglie',rcd:'A',cos:0.95,minS:2.5,minIn:16},
+ motore:{l:'Motore / pompa / autoclave',rcd:'A',cos:0.8,minS:1.5,minIn:6,note:'Per avviamenti gravosi usare curva D. Se a inverter: tipo F (monofase) o B (trifase).'},
+ esterno:{l:'Prese / luci esterne',rcd:'A',cos:0.95,minS:2.5,minIn:10},
+ ausiliari:{l:'Ausiliari / domotica',rcd:'A',cos:0.9,minS:1.5,minIn:6},
+ generico:{l:'Generico',rcd:'A',cos:0.9,minS:1.5,minIn:6}
+};
+const SPI_SOGLIA=11.08;
+const TABS=[['t-forn','1 · Fornitura'],['t-qd','2 · Quadri'],['t-circ','3 · Circuiti'],['t-pv','4 · Fotovoltaico'],['t-ris','5 · Risultati'],['t-quadro','6 · Distinte e certificazione'],['t-db','Database']];
+
+/* ===================== STATO ===================== */
+const LS='dimquadri_v12', LSLIB='dimquadri_lib_v1';
+/* ===================== UTILITY ===================== */
+const $=s=>document.querySelector(s);
+const f=(x,d=1)=>(x==null||!isFinite(x))?'—':Number(x).toLocaleString('it-IT',{minimumFractionDigits:d,maximumFractionDigits:d});
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function getP(p){return p.split('.').reduce((o,k)=>o?.[k],S)}
+function setP(p,v){const k=p.split('.');let o=S;for(let i=0;i<k.length-1;i++)o=o[k[i]];o[k[k.length-1]]=v}
+function inp(path,opt={}){const v=getP(path);let ctl;
+ if(opt.sel){ctl=`<select data-k="${path}" ${opt.n?'data-t="n"':''}>${opt.sel.map(o=>{const[val,t]=Array.isArray(o)?o:[o,o];return`<option value="${esc(val)}" ${String(v)===String(val)?'selected':''}>${esc(t)}</option>`}).join('')}</select>`}
+ else ctl=`<input data-k="${path}" ${opt.txt?'':'data-t="n" type="number" step="any"'} value="${esc(v)}">`;
+ return opt.bare?ctl:`<label>${opt.l||''}${ctl}${opt.h?`<span class="hint">${opt.h}</span>`:''}</label>`}
+const SEL_POSA=Object.entries(POSE), SEL_ISO=[['PVC','PVC 70 °C'],['XLPE','EPR/XLPE 90 °C']], SEL_SN=[['si','Sì'],['no','No']];
+const lerp=(xs,ys,x)=>{if(x<=xs[0])return ys[0];for(let i=1;i<xs.length;i++)if(x<=xs[i])return ys[i-1]+(ys[i]-ys[i-1])*(x-xs[i-1])/(xs[i]-xs[i-1]);return ys[ys.length-1]};
+
+/* ===================== FUNZIONI CATALOGO ===================== */
+const famOf=d=>d.ser.startsWith('MDC')?'MDC':d.ser.startsWith('MT')?'MT':d.ser;
+function inEff(fam,In,T){const t=DER[fam];if(!t||!t.v[In])return In*(T>30?1-0.005*(T-30):1);return lerp(t.T,t.v[In],T)}
+function i2tOf(ser,fasi,In,Icc){
+ const key=ser.replace(' ','')+(fasi==3?'_4':'_2');const c=I2T[key]||I2T[ser.replace(' ','')+'_2'];
+ if(!c)return{v:null,src:'curva non disponibile'};
+ const row=c.t[String(In)]||c.t[Object.keys(c.t).map(Number).sort((a,b)=>a-b).find(k=>k>=In)];
+ if(!row)return{v:null,src:'taglia non in curva'};
+ const I=Math.max(Icc,1000);
+ const pts=I2T_PTS.map((x,i)=>[x,row[i]]).filter(p=>p[1]);
+ const last=pts[pts.length-1];
+ if(I>last[0]+1){if(I<=c.xmax)return{v:last[1]*1.05,src:`${key} (estrapolato a fine curva)`};return{v:null,beyond:true,src:`${key}: Icc oltre la curva (${f(c.xmax/1000,1)} kA)`}}
+ for(let i=1;i<pts.length;i++)if(I<=pts[i][0]){const[x1,y1]=pts[i-1],[x2,y2]=pts[i];return{v:Math.pow(10,Math.log10(y1)+(Math.log10(I)-Math.log10(x1))/(Math.log10(x2)-Math.log10(x1))*(Math.log10(y2)-Math.log10(y1))),src:key+(c.env?' (inviluppo)':'')}}
+ return{v:pts[0][1],src:key};
+}
+function pdissDev(d,Ib,role){const r=Math.pow(Math.min(Ib,d.In)/d.In,2);
+ if(famOf(d)==='MDC'){const p=PD.MDC[d.In]||[3.7,2.7];const w=d.poles==='1P+N'?p[0]+p[1]:d.poles==='2P'?2*p[0]:d.poles==='3P'?3*p[0]:3*p[0]+p[1];return w*r}
+ if(famOf(d)==='MT'){const t=d.curve==='D'?PD.MT.D:PD.MT.BC;const n=d.poles==='1P+N'||d.poles==='2P'?2:4;return (t[d.In]||5)*n*r}
+ if(d.ser==='BD'){return (PD.BD[d.poles]?.[role]||1)*Math.pow(Math.min(Ib,role)/role,2)}
+ if(d.ser==='IDP'){const g=(d.rcd==='B'||d.rcd==='A[EV]')?PD.IDP.evb:PD.IDP.std;return (g[d.poles]?.[d.In]||10)*r}
+ return 0}
+const descDev=d=>{
+ if(famOf(d)==='MDC')return`Magnetotermico differenziale ${d.ser} ${d.poles} ${d.curve}${d.In} tipo ${d.rcd} ${d.idn} mA`;
+ if(famOf(d)==='MT')return`Magnetotermico ${d.ser} ${d.poles} ${d.curve}${d.In}`;
+ if(d.ser==='BD')return`Blocco differenziale BD ${d.poles} ${d.In} A tipo ${d.rcd} ${d.idn} mA`;
+ if(d.ser==='IDP')return`Differenziale puro IDP ${d.poles} ${d.In} A tipo ${d.rcd} ${d.idn} mA`;return d.code};
+const buKey=g=>!g||!g.ser?null:g.ser==='MT 60'?'MT60':g.ser==='MT 100'?(g.In<=25?'MT100a':'MT100b'):null;
+
+// Selezione protezione di linea
+function pickProt(q){
+ // q: {Ib,fasi,rcd,idn,curve,T,Icc,minIn,maxIn,gen}
+ const P1=q.fasi==3?['4P']:['1P+N','2P'], PR=q.fasi==3?'4P':'2P', V=q.fasi==3?400:230;
+ const okIn=(fam,In)=>In>=(q.minIn||0)&&(!q.maxIn||In<=q.maxIn)&&inEff(fam,In,q.T)>=q.Ib;
+ const sols=[];
+ const mdcT={A:['A'],'A[IR]':['A[IR]'],'A[S]':['A[S]'],F:['F']}[q.rcd]||[];
+ const noRcd=q.rcd==='none';
+ if(!noRcd)for(const ser of['MDC 60','MDC 100'])for(const po of P1){
+  const c=DEV.filter(d=>d.ser===ser&&d.poles===po&&d.curve===q.curve&&mdcT.includes(d.rcd)&&d.idn===q.idn).sort((a,b)=>a.In-b.In).find(d=>okIn('MDC',d.In));
+  if(c){sols.push({kind:'MDC',items:[c],prot:c,In:c.In,mods:c.mods});break}}
+ const mts=[];
+ for(const ser of['MT 60','MT 100']){
+  const po=q.fasi==3?['4P']:(q.curve==='C'?['1P+N','2P']:['2P']);
+  for(const p of po){const c=DEV.filter(d=>d.ser===ser&&d.poles===p&&d.curve===q.curve).sort((a,b)=>a.In-b.In).find(d=>okIn('MT',d.In));if(c){mts.push(c);break}}}
+ for(const mt of mts){
+  if(noRcd){sols.push({kind:'MT',items:[mt],prot:mt,In:mt.In,mods:mt.mods});continue}
+  if(['A','A[S]','A[IR]'].includes(q.rcd)){const bd=DEV.filter(d=>d.ser==='BD'&&d.poles===PR&&d.rcd===q.rcd&&d.idn===q.idn&&d.In>=mt.In).sort((a,b)=>a.In-b.In)[0];
+   if(bd)sols.push({kind:'MT+BD',items:[mt,bd],prot:mt,In:mt.In,mods:mt.mods+bd.mods,bdRole:mt.In})}
+  const idp=DEV.filter(d=>d.ser==='IDP'&&d.poles===PR&&d.rcd===q.rcd&&d.idn===q.idn&&d.In>=mt.In&&inEff('IDP',d.In,q.T)>=q.Ib).sort((a,b)=>a.In-b.In)[0];
+  if(idp)sols.push({kind:'MT+IDP',items:[mt,idp],prot:mt,In:mt.In,mods:mt.mods+idp.mods})}
+ if(!sols.length)return null;
+ sols.forEach(s=>{const r=icnOf(s.prot);s.icn=r.icn;s.icu=r.icu;s.icOk=r.icn>=q.Icc/1000;
+  const b=BU[s.prot.ser]?.[V]?.[buKey(q.gen)];s.bu=(!s.icOk&&b&&b>=q.Icc/1000)?b:null});
+ const order=['MT','MDC','MT+BD','MT+IDP'];
+ const feas=x=>x.icOk||x.bu?0:1;
+ sols.sort((a,b)=>feas(a)-feas(b)||order.indexOf(a.kind)-order.indexOf(b.kind)||(a.icOk?0:1)-(b.icOk?0:1)||a.icn-b.icn);
+ return sols[0];
+}
+
+/* ===================== STATO E PROGETTO DI ESEMPIO ===================== */
+const FEED0={L:10,posa:'B1',iso:'PVC',grup:1,tAmb:30,dv:1.5,curva:'C',rcd:'none',selAmp:'si'};
+const C0={cos:0.9,ku:1,fasi:1,fase:'auto',L:12,posa:'B1',iso:'PVC',grup:2,tAmb:30,curva:'C',dv:4,rdc:'si',idt:'auto'};
+const cir=(q,nome,tipo,P,o={})=>Object.assign({},C0,{q,nome,tipo,P,cos:TIPI[tipo].cos},o);
+function defaults(){return{
+ forn:{cliente:'',commessa:'',fasi:3,P:6,icc:10,iccFN:6,ra:50,montL:5,montS:10,montIso:'PVC',montPosa:'B1',tq:35,genDiff:'no',genIdn:300,spiP:3},
+ quadri:[{id:'QG',nome:'Quadro generale',parent:'',fasi:3,fase:'auto',pos:'parete',porta:'fume',size:'auto',ris:20,spd:'si',testa:'mt',kc:1,feeder:null}],
+ circ:[],inv:[],
+ mod:{voc:49.5,isc:13.9,beta:-0.25,irev:25,vsys:1500},tmin:-20};}
+const INV0={nome:'Inverter FV',n:1,fasi:3,pac:6,iac:10,ocpd:16,curva:'C',spi:'si',rcd:'A',idn:300,fase:'auto',L:15,posa:'B1',iso:'PVC',grup:1,tAmb:30,dv:1.5,vdc:1000,iscm:20,dcsw:'si',spddc:'si',mppt:[{ns:10,np:1}]};
+const CASA=q=>[cir(q,'Luci','luce',1,{L:25,grup:3}),cir(q,'Prese','prese',3,{ku:0.4,L:20,grup:3}),cir(q,'Prese cucina','prese_cucina',3,{ku:0.6,L:12,grup:3}),cir(q,'Piano induzione','induzione',3.7,{ku:0.8,L:8,grup:2}),cir(q,'Forno','forno',2.2,{L:8,grup:2}),cir(q,'Lavatrice','lavatrice',2.2,{L:10,grup:2}),cir(q,'Lavastoviglie','lavastoviglie',2,{L:8,grup:2}),cir(q,'Boiler','boiler',1.5,{L:10,grup:2})];
+function tplMono(){const d=defaults();d.forn.fasi=1;d.forn.P=4.5;d.forn.icc=6;d.quadri[0].fasi=1;d.quadri[0].kc=0.4;d.circ=CASA('QG').map(c=>Object.assign(c,{fasi:1}));d.circ.push(cir('QG','Climatizzatore','clima',1.2,{L:15}));
+ d.inv=[Object.assign({},INV0,{q:'QG',nome:'Inverter 4,6 kW monofase',fasi:1,pac:4.6,iac:21,ocpd:32,vdc:600,iscm:16,mppt:[{ns:9,np:1},{ns:6,np:1}]})];return d}
+function tplTri(){const d=defaults();d.forn.P=6;d.quadri[0].kc=0.5;d.circ=CASA('QG');d.circ.push(cir('QG','Pompa di calore','pdc',3,{fasi:3,L:10,grup:1}));
+ d.quadri.push(Object.assign(JSON.parse(JSON.stringify(PRESET.wb3.q)),{id:'QWB',parent:'QG'}));d.circ.push(...PRESET.wb3.c('QWB'));
+ d.inv=[Object.assign({},INV0,{q:'QG',nome:'Inverter 6 kW trifase',pac:6,iac:9.6,ocpd:16,mppt:[{ns:10,np:1},{ns:8,np:1}]})];return d}
+function tplVilla(){return{
+ forn:{cliente:'Esempio — villetta trifase 10 kW',commessa:'',fasi:3,P:10,icc:10,iccFN:6,ra:50,montL:8,montS:10,montIso:'PVC',montPosa:'B1',tq:35,genDiff:'no',genIdn:300,spiP:3},
+ quadri:[
+  {id:'QG',nome:'Quadro generale',parent:'',fasi:3,fase:'auto',pos:'parete',porta:'fume',size:'auto',ris:20,spd:'si',testa:'mt',kc:0.6,feeder:null},
+  {id:'QWB',nome:'Quadro wallbox',parent:'QG',fasi:3,fase:'auto',pos:'esterno',porta:'fume',size:'auto',ris:20,spd:'no',testa:'sez',kc:1,feeder:Object.assign({},FEED0,{L:15,posa:'B2'})},
+  {id:'QPDC',nome:'Quadro pompa di calore',parent:'QG',fasi:3,fase:'auto',pos:'esterno',porta:'fume',size:'auto',ris:20,spd:'no',testa:'sez',kc:1,feeder:Object.assign({},FEED0,{L:12,posa:'B2'})},
+  {id:'Q1',nome:'Quadro casa — zona giorno',parent:'QG',fasi:1,fase:'auto',pos:'incasso',porta:'cieca',size:'auto',ris:20,spd:'no',testa:'sez',kc:0.5,feeder:Object.assign({},FEED0,{L:10})},
+  {id:'Q2',nome:'Quadro casa — zona notte',parent:'QG',fasi:1,fase:'auto',pos:'incasso',porta:'cieca',size:'auto',ris:20,spd:'no',testa:'sez',kc:0.5,feeder:Object.assign({},FEED0,{L:14})}],
+ circ:[
+  cir('QWB','Wallbox 11 kW','wallbox',11,{fasi:3,L:5,grup:1,dv:4}),
+  cir('QPDC','Pompa di calore','pdc',5,{fasi:3,L:4,grup:1}),
+  cir('Q1','Luci zona giorno','luce',1,{L:25,grup:3}),
+  cir('Q1','Prese soggiorno','prese',3,{ku:0.5,L:20,grup:3}),
+  cir('Q1','Prese cucina','prese',3.5,{ku:0.6,L:12,grup:3}),
+  cir('Q1','Piano induzione','induzione',4.6,{ku:0.8,L:8,grup:2}),
+  cir('Q1','Forno','generico',2.2,{cos:1,L:8,grup:2,minS:2.5}),
+  cir('Q1','Lavastoviglie','generico',2,{cos:0.95,L:8,grup:2}),
+  cir('Q2','Luci zona notte','luce',0.8,{L:25,grup:3}),
+  cir('Q2','Prese camere','prese',3,{ku:0.4,L:22,grup:3}),
+  cir('Q2','Prese bagni','prese',2,{ku:0.5,L:15,grup:3}),
+  cir('Q2','Boiler elettrico','boiler',1.5,{L:10,grup:2}),
+  cir('Q2','Climatizzatore','clima',2,{L:15,grup:2}),
+  cir('Q2','Lavatrice','generico',2.2,{cos:0.95,L:10,grup:2})],
+ inv:[],
+ mod:{voc:49.5,isc:13.9,beta:-0.25,irev:25,vsys:1500},
+ tmin:-20
+};}
+function migrate(s){const d=defaults();s.forn=Object.assign({},d.forn,s.forn);
+ if(!s.quadri||!s.quadri.length){s.quadri=[Object.assign({},d.quadri[0],{pos:s.forn.pos||'parete',porta:s.forn.porta||'fume',ris:s.forn.ris??20,spd:s.forn.spd||'si'})];(s.circ||[]).forEach(c=>c.q='QG');(s.inv||[]).forEach(v=>v.q='QG')}
+ s.quadri=s.quadri.map(q=>Object.assign({fasi:3,fase:'auto',pos:'parete',porta:'fume',size:'auto',ris:20,spd:'no',testa:'sez',kc:1},q,{feeder:q.parent?Object.assign({},FEED0,q.feeder||{}):null}));
+ s.circ=(s.circ||[]).map(c=>Object.assign({},C0,c));s.inv=(s.inv||[]).map(v=>Object.assign({q:s.quadri[0].id},v));
+ s.mod=Object.assign({},d.mod,s.mod);if(s.tmin==null)s.tmin=d.tmin;return s}
+let S; try{S=JSON.parse(localStorage.getItem(LS));S=S?migrate(S):defaults()}catch(e){S=defaults()}
+let LIB; try{LIB=JSON.parse(localStorage.getItem(LSLIB))||[]}catch(e){LIB=[]}
+function saveLS(alertMe){try{localStorage.setItem(LS,JSON.stringify(S));localStorage.setItem(LSLIB,JSON.stringify(LIB));if(alertMe)alert('Progetto salvato nel browser.')}catch(e){if(alertMe)alert('Salvataggio non disponibile in questo browser.')}}
+function exportJSON(){const b=new Blob([JSON.stringify({progetto:S,libreria:LIB},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(S.forn.commessa||'impianto')+'.json';a.click()}
+function importJSON(ev){const fl=ev.target.files[0];if(!fl)return;const r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);S=migrate(o.progetto||o);if(o.libreria)LIB=o.libreria;renderAll()}catch(e){alert('File non valido')}};r.readAsText(fl);ev.target.value=''}
+
+/* ===================== MOTORE DI CALCOLO ===================== */
+const MAGLOW={B:3,C:5,D:10};
+const k1v=(iso,t)=>K1[iso][Math.min(50,Math.max(10,Math.ceil(t/5)*5))];
+const k2v=n=>n<=1?1:(K2[n]||0.45);
+function dvCalc(fasi,L,Ib,s,cos){const sin=Math.sqrt(Math.max(0,1-cos*cos));const z=RHO_DV/s*cos+XL*sin;return fasi==3?Math.sqrt(3)*L*Ib*z/400*100:2*L*Ib*z/230*100}
+const qName=id=>(S.quadri.find(q=>q.id===id)||{}).nome||id;
+
+function supplyRoot(F){
+ const U0=230,t=[],Rm=RHO20*F.montL/F.montS,tri=F.fasi==3;
+ const iccFN=tri?F.iccFN:F.icc,ZloopFN=U0/(iccFN*1000),IccFNQ=U0/(ZloopFN+2*Rm)/1000;
+ let Icc3Q=null,Zph=null;
+ if(tri){Zph=U0/(F.icc*1000);Icc3Q=U0/(Zph+Rm)/1000;t.push(`Icc trifase al punto di consegna ${f(F.icc,1)} kA → Zfase ${f(Zph*1000,1)} mΩ; Icc3 al quadro = 230/(Zfase + ρ20·Lm/Sm) = ${f(Icc3Q,2)} kA`)}
+ t.push(`Icc fase-neutro al punto di consegna ${f(iccFN,1)} kA → Zanello ${f(ZloopFN*1000,1)} mΩ; Icc F-N al quadro = ${f(IccFNQ,2)} kA`);
+ const ZloopMin=ZloopFN+1.5*2*Rm;
+ return{Icc3Q,IccFNQ,IccQ:tri?Icc3Q:IccFNQ,Zph:tri?Zph+Rm:null,Zloop:ZloopFN+2*Rm,ZloopMin,trace:t};
+}
+function supplyChild(sup,L,S_,fasi){
+ const U0=230,Rc=RHO20*L/S_;
+ const Zph=sup.Zph!=null&&fasi==3?sup.Zph+Rc:null,Zloop=sup.Zloop+2*Rc;
+ const Icc3Q=Zph?U0/Zph/1000:null,IccFNQ=U0/Zloop/1000;
+ return{Icc3Q,IccFNQ,IccQ:fasi==3?Icc3Q:IccFNQ,Zph,Zloop,ZloopMin:sup.ZloopMin+1.5*2*Rc,trace:[`Icc al quadro: ${Icc3Q?'trifase '+f(Icc3Q,2)+' kA, ':''}fase-neutro ${f(IccFNQ,2)} kA (linea ${L} m, ${S_} mm²)`]};
+}
+
+function sizeLine(o,sup,F,up){
+ const t=[],m=[];
+ t.push(`Ib = ${o.ibTxt}`);
+ const Icc=(o.fasi==3?sup.Icc3Q:sup.IccFNQ)*1000;
+ if(o.dvMax<=0){m.push(['er',`${o.nome}: la caduta di tensione a monte (${f(o.dvUp,2)} %) esaurisce già il limite del circuito.`]);return{err:true,trace:t,msgs:m}}
+ const sol=pickProt({Ib:o.Ib,fasi:o.fasi,rcd:o.rcd,idn:o.idn,curve:o.curva,T:F.tq,Icc,minIn:o.minIn,maxIn:o.maxIn,gen:up});
+ if(!sol){m.push(['er',`${o.nome}: nessun apparecchio Gewiss per Ib ${f(o.Ib,1)} A, curva ${o.curva}, ${o.rcd==='none'?'senza differenziale':'tipo '+o.rcd+' '+o.idn+' mA'}${o.maxIn?', In ≤ '+o.maxIn+' A':''} a ${F.tq} °C.`]);return{err:true,trace:t,msgs:m}}
+ const In=sol.In,fam=famOf(sol.prot);
+ t.push(`Soluzione ${sol.kind}: ${sol.items.map(d=>d.code+' ('+descDev(d)+')').join(' + ')}`);
+ t.push(`Declassamento ${sol.prot.ser} a ${F.tq} °C (tabella catalogo): In ${In} A → ${f(inEff(fam,In,F.tq),2)} A ≥ Ib ${f(o.Ib,2)} A ✓`);
+ if(sol.kind==='MT+IDP'){const idp=sol.items[1];t.push(`IDP ${idp.In} A a ${F.tq} °C → ${f(inEff('IDP',idp.In,F.tq),1)} A ≥ Ib ✓; cortocircuito dell'IDP protetto dal magnetotermico in serie`)}
+ if(o.maxIn)t.push(`Vincolo costruttore: In ≤ ${o.maxIn} A ✓`);
+ const nc=o.fasi==3?3:2,k1=k1v(o.iso,o.tAmb),k2=k2v(o.grup),tab=IZ[o.iso][o.posa][nc];
+ t.push(`Cavo: posa ${o.posa}, ${o.iso}, ${nc} conduttori caricati, k1(${o.tAmb} °C) = ${k1}, k2(${o.grup} circuiti) = ${k2}`);
+ let Sx=null,Iz=null,dv=null,Sth=null;
+ for(let i=0;i<SEZ.length;i++){const s=SEZ[i];if(s<(o.minS||1.5))continue;const iz=tab[i]*k1*k2,d=dvCalc(o.fasi,o.L,o.Ib,s,o.cos);
+  if(iz>=In&&Sth==null)Sth=s;if(iz>=In&&d<=o.dvMax){Sx=s;Iz=iz;dv=d;break}}
+ if(!Sx){m.push(['er',`${o.nome}: nessuna sezione fino a 35 mm² soddisfa portata e caduta di tensione.`]);return{err:true,sol,In,trace:t,msgs:m}}
+ t.push(`Iz = ${tab[SEZ.indexOf(Sx)]}·${k1}·${k2} = ${f(Iz,1)} A ≥ In ${In} A ✓`);
+ if(Sth!=null&&Sx>Sth)t.push(`Sezione aumentata da ${Sth} a ${Sx} mm² per la caduta di tensione`);
+ t.push(`ΔV linea = ${f(dv,2)} %${o.dvUp?` + ${f(o.dvUp,2)} % a monte = ${f(dv+o.dvUp,2)} %`:''} ≤ ${f(o.dvMax+(o.dvUp||0),1)} % ✓`);
+ t.push(`Icc max a inizio linea (${o.fasi==3?'trifase':'fase-neutro'}) = ${f(Icc/1000,2)} kA; ${sol.prot.ser}: Icn ${sol.icn} kA, Icu ${sol.icu} kA`);
+ if(sol.icOk)t.push(`Icn ${sol.icn} kA ≥ Icc ✓`);
+ else if(sol.bu){t.push(`Back-up con ${up.code} a monte (pag. 724, EN 60947-2): ${sol.bu} kA ≥ Icc ✓`);m.push(['wa',`${o.nome}: potere di interruzione in back-up con ${up.code} (${sol.bu} kA, EN 60947-2).`])}
+ else{t.push(`Icn ${sol.icn} kA < Icc ✗`);m.push(['er',`${o.nome}: potere di interruzione insufficiente (${sol.icn} kA < ${f(Icc/1000,2)} kA).`])}
+ const K=KAD[o.iso],K2S2=K*K*Sx*Sx,it=i2tOf(sol.prot.ser,o.fasi,In,Icc);if(o.curva==='D'&&it.v)it.src+=' — curva B/C del catalogo usata per la curva D (approssimazione)';let i2t;
+ if(it.v==null){i2t='ver';t.push(`K²S² = ${f(K2S2,0)} A²s — I²t: ${it.src} → verificare`);m.push(['wa',`${o.nome}: I²t non leggibile dalle curve a ${f(Icc/1000,2)} kA.`])}
+ else if(K2S2>=it.v){i2t='ok';t.push(`K²S² = ${K}²·${Sx}² = ${f(K2S2,0)} A²s ≥ I²t ${f(it.v,0)} A²s (${it.src}) ✓`)}
+ else{i2t='ko';t.push(`K²S² = ${f(K2S2,0)} A²s < I²t ${f(it.v,0)} A²s ✗`);m.push(['er',`${o.nome}: cavo ${Sx} mm² non protetto dall'energia passante.`])}
+ const IccMin=0.8*230/(sup.ZloopMin+1.5*RHO20*2*o.L/Sx),Im=MAG[o.curva]*In,mag=IccMin>=Im;
+ t.push(`Icc min fondo linea = ${f(IccMin,0)} A ${mag?'≥':'<'} Im = ${MAG[o.curva]}·In = ${Im} A ${mag?'✓':'✗'}`);
+ if(!mag)m.push(['er',`${o.nome}: Icc minima a fondo linea insufficiente per la soglia magnetica curva ${o.curva}.`]);
+ return{sol,In,S:Sx,Iz,dv,Icc,K2S2,i2tV:it.v,i2t,IccMin,Im,mag,nc,trace:t,msgs:m};
+}
+
+function calc(){
+ const F=S.forn,tri=F.fasi==3,R={msgs:[],Q:{},order:[],dc:[],box:[]};const add=(k,t)=>R.msgs.push([k,t]);
+ const Qs=S.quadri,byId=Object.fromEntries(Qs.map(q=>[q.id,q]));
+ const root=Qs.find(q=>!q.parent)||Qs[0];root.parent='';
+ Qs.forEach(q=>{if(q!==root&&(!byId[q.parent]||q.parent===q.id))q.parent=root.id});
+ // cicli
+ Qs.forEach(q=>{let p=q,n=0;while(p.parent&&n<20){p=byId[p.parent];n++}if(n>=20){q.parent=root.id;add('er',`${q.nome}: alimentazione circolare corretta sul quadro generale.`)}});
+ const kids=id=>Qs.filter(q=>q.parent===id&&q!==root);
+ Qs.forEach(q=>{q._fasi=tri?(q===root?3:+q.fasi):1});
+ Qs.forEach(q=>{if(q!==root&&q._fasi==3&&byId[q.parent]._fasi==1){q._fasi=1;add('er',`${q.nome}: un quadro trifase non può essere alimentato da un quadro monofase — trattato come monofase.`)}});
+ S.circ.forEach(c=>{if(!byId[c.q])c.q=root.id;if(!tri||byId[c.q]._fasi==1)c.fasi=1});
+ S.inv.forEach(v=>{if(!byId[v.q])v.q=root.id;if(!tri||byId[v.q]._fasi==1)v.fasi=1});
+ const ibC=c=>c.fasi==3?c.P*1000*c.ku/(Math.sqrt(3)*400*c.cos):c.P*1000*c.ku/(230*c.cos);
+ // ---- Assegnazione fasi
+ const monoTop=Qs.filter(q=>q!==root&&q._fasi==1&&byId[q.parent]._fasi==3);
+ const subtree=q=>[q,...kids(q.id).flatMap(subtree)];
+ const Pq=q=>subtree(q).reduce((a,x)=>a+S.circ.filter(c=>c.q===x.id).reduce((b,c)=>b+c.P*c.ku,0)*x.kc,0);
+ const ph={L1:0,L2:0,L3:0},phG={L1:0,L2:0,L3:0};
+ if(tri){
+  const items=[...monoTop.map(q=>({o:q,P:Pq(q),fx:q.fase})),...S.circ.filter(c=>c.fasi!=3&&byId[c.q]._fasi==3).map(c=>({o:c,P:c.P*c.ku,fx:c.fase}))];
+  items.filter(i=>i.fx!=='auto').forEach(i=>{i.o._fase=i.fx;ph[i.fx]+=i.P});
+  items.filter(i=>i.fx==='auto').sort((a,b)=>b.P-a.P).forEach(i=>{const k=Object.keys(ph).sort((a,b)=>ph[a]-ph[b])[0];i.o._fase=k;ph[k]+=i.P});
+  S.circ.filter(c=>c.fasi==3).forEach(c=>{c._fase='L1-L2-L3';['L1','L2','L3'].forEach(k=>ph[k]+=c.P*c.ku/3)});
+  const setF=(q,fz)=>{q._fase=fz;kids(q.id).forEach(k=>setF(k,fz))};monoTop.forEach(q=>setF(q,q._fase));
+  S.circ.filter(c=>byId[c.q]._fasi==1).forEach(c=>c._fase=byId[c.q]._fase);
+  const gi=S.inv.filter(v=>v.fasi!=3&&byId[v.q]._fasi==3);
+  gi.filter(v=>v.fase!=='auto').forEach(v=>{v._fase=v.fase;phG[v.fase]+=v.pac*v.n});
+  gi.filter(v=>v.fase==='auto').sort((a,b)=>b.pac*b.n-a.pac*a.n).forEach(v=>{const k=Object.keys(phG).sort((a,b)=>phG[a]-phG[b])[0];v._fase=k;phG[k]+=v.pac*v.n});
+  S.inv.filter(v=>v.fasi==3).forEach(v=>{v._fase='L1-L2-L3';['L1','L2','L3'].forEach(k=>phG[k]+=v.pac*v.n/3)});
+  S.inv.filter(v=>byId[v.q]._fasi==1).forEach(v=>{v._fase=byId[v.q]._fase;phG[v._fase]+=v.pac*v.n});
+ }else{Qs.forEach(q=>q._fase='L-N');S.circ.forEach(c=>{c._fase='L-N';ph.L1+=c.P*c.ku});S.inv.forEach(v=>{v._fase='L-N';phG.L1+=v.pac*v.n})}
+ R.ph=ph;R.phG=phG;
+ // ---- Correnti per fase (dal basso)
+ const addPh=(o,fz,I)=>{if(fz==='L1-L2-L3'){o.L1+=I;o.L2+=I;o.L3+=I}else if(fz==='L-N')o.L1+=I;else o[fz]+=I};
+ function loadQ(q){const c={L1:0,L2:0,L3:0},g={L1:0,L2:0,L3:0};
+  S.circ.filter(x=>x.q===q.id).forEach(x=>addPh(c,x._fase,ibC(x)));
+  S.inv.filter(x=>x.q===q.id).forEach(x=>addPh(g,x._fase,x.iac*x.n));
+  kids(q.id).forEach(k=>{const l=loadQ(k);['L1','L2','L3'].forEach(p=>{c[p]+=l.c[p];g[p]+=l.g[p]})});
+  ['L1','L2','L3'].forEach(p=>c[p]*=q.kc);q._load={c,g};return q._load}
+ loadQ(root);
+ const maxPh=o=>Math.max(o.L1,o.L2,o.L3);
+ // ---- SPI
+ const PacTot=S.inv.reduce((a,v)=>a+v.pac*v.n,0);R.PacTot=PacTot;
+ R.spiExt=PacTot>0&&(S.inv.some(v=>v.spi!=='si')||PacTot>SPI_SOGLIA);
+ const invQ=[...new Set(S.inv.map(v=>v.q))];R.spiQ=R.spiExt?(invQ.length===1?invQ[0]:root.id):null;
+ if(PacTot>0){
+  if(R.spiExt)add('wa',`CEI 0-21: Pac ${f(PacTot,2)} kW → SPI esterno certificato + DDI nel quadro "${qName(R.spiQ)}". SPI non a catalogo Gewiss: inserire il modello scelto. Soglia ${SPI_SOGLIA} kW probabile, verificare l'edizione vigente.`);
+  else add('in',`CEI 0-21: Pac ${f(PacTot,2)} kW ≤ ${SPI_SOGLIA} kW → SPI integrato ammesso (probabile).`);
+  if(PacTot>F.P)add('wa',`FV ${f(PacTot,1)} kW > fornitura ${F.P} kW: richiedere potenza in immissione adeguata.`);
+  if(tri&&S.inv.some(v=>v.fasi!=3)){const v=Object.values(phG);if(Math.max(...v)-Math.min(...v)>6)add('er','Squilibrio della generazione monofase > 6 kW (CEI 0-21, probabile).')}}
+ add('in','Sistema TT: tutto ciò che sta a monte del primo differenziale (montante, quadro generale, linee di alimentazione dei sottoquadri senza differenziale) va realizzato in classe II: cavi con guaina in tubo isolante, centralini in classe II (CEI 64-8 sez. 413). I centralini Gewiss del tool sono in classe II.');
+ // ---- Stima della protezione più grande in un quadro (per la selettività amperometrica)
+ function estMaxIn(q){let mx=0;
+  S.circ.filter(c=>c.q===q.id).forEach(c=>{const T=TIPI[c.tipo]||TIPI.generico;let rcd=(c.fasi==3&&T.rcd3)?T.rcd3:T.rcd;if(c.tipo==='wallbox'&&c.rdc!=='si')rcd='A[EV]';if(c.idt&&c.idt!=='auto')rcd=c.idt;
+   const s=pickProt({Ib:ibC(c),fasi:c.fasi,rcd,idn:30,curve:c.curva,T:F.tq,Icc:1,minIn:T.minIn,gen:null});if(s)mx=Math.max(mx,s.In)});
+  S.inv.filter(v=>v.q===q.id).forEach(v=>{const s=pickProt({Ib:v.iac,fasi:v.fasi,rcd:v.rcd,idn:+v.idn,curve:v.curva,T:F.tq,Icc:1,minIn:6,maxIn:v.ocpd,gen:null});if(s)mx=Math.max(mx,s.In)});
+  kids(q.id).forEach(k=>{const m=estMaxIn(k);const n=k.feeder.selAmp!=='no'?(STD_IN.find(x=>x>m)||63):m;mx=Math.max(mx,n)});
+  return mx}
+ // ---- Elaborazione dei quadri (dall'alto)
+ function procQ(q,sup,up,dvUp,feedLine){
+  const Rq={q,sup,dvUp,lines:[],bom:[],feedLine,trace:[...sup.trace]};R.Q[q.id]=Rq;R.order.push(q.id);
+  const fq=q._fasi,po=fq==3?'4P':'2P';let head=null,buDev=up;
+  if(q===root){
+   const IbC=tri?F.P*1000*1.1/(Math.sqrt(3)*400*0.95):F.P*1000*1.1/(230*0.95),IbPh=maxPh(q._load.c),IbG=Math.max(IbC,IbPh,maxPh(q._load.g));
+   if(IbPh>IbC*1.02)add('wa',`Quadro generale: la fase più carica (${f(IbPh,1)} A con Kc ${q.kc}) supera la corrente di contratto equilibrata (${f(IbC,1)} A). Generale dimensionato sulla fase più carica; riequilibrare le fasi o ridurre Kc se realistico.`);
+   for(const ser of['MT 60','MT 100']){if(SERI[ser].icn<sup.IccQ)continue;head=DEV.filter(d=>d.ser===ser&&d.poles===po&&d.curve==='C').sort((a,b)=>a.In-b.In).find(d=>inEff('MT',d.In,F.tq)>=IbG);if(head)break}
+   Rq.trace.push(`Ib prelievo = 1,1·Pcontr/(${tri?'√3·400':'230'}·0,95) = ${f(IbC,1)} A (+10% tollerato dal limitatore, ipotesi); immissione FV max per fase ${f(maxPh(q._load.g),1)} A`);
+   Rq.trace.push(`Corrente per fase a valle (con Ku e Kc ${q.kc}): ${['L1','L2','L3'].slice(0,tri?3:1).map(p=>p+' '+f(q._load.c[p],1)+' A').join(', ')} → Ib generale = ${f(IbG,1)} A`);
+   if(!head){add('er',`Nessun interruttore generale modulare (MT 60/MT 100, max 63 A) per Ib ${f(IbG,1)} A e Icc ${f(sup.IccQ,2)} kA: ridurre la contemporaneità Kc del quadro generale se realistico, oppure serve un generale scatolato (fuori campo del tool).`);}
+   else{Rq.head={dev:head,In:head.In,Ib:IbG,Icn:SERI[head.ser].icn};buDev=head;
+    Rq.trace.push(`Generale ${head.code} — ${descDev(head)}: In a ${F.tq} °C = ${f(inEff('MT',head.In,F.tq),1)} A ≥ ${f(IbG,1)} A ✓; Icn ${SERI[head.ser].icn} kA ≥ ${f(sup.IccQ,2)} kA ✓`);
+    Rq.bom.push({code:head.code,d:'Generale — '+descDev(head),q:1,mods:head.mods,p:pdissDev(head,IbG),pg:SERI[head.ser].pg});
+    const IzM=IZ[F.montIso][F.montPosa][tri?3:2][SEZ.indexOf(+F.montS)];
+    if(isFinite(IzM)){Rq.trace.push(`Montante ${F.montS} mm²: Iz ≈ ${f(IzM,0)} A ${IzM>=head.In?'≥':'<'} ${head.In} A ${IzM>=head.In?'✓':'✗'}`);if(IzM<head.In)add('er',`Montante ${F.montS} mm² sottodimensionato.`)}
+    if(F.genDiff==='S'){const gd=DEV.filter(d=>d.ser==='IDP'&&d.poles===po&&d.rcd==='A[S]'&&d.idn===+F.genIdn&&d.In>=head.In).sort((a,b)=>a.In-b.In)[0];
+     if(gd){Rq.bom.push({code:gd.code,d:'Differenziale generale — '+descDev(gd),q:1,mods:gd.mods,p:pdissDev(gd,IbG),pg:'132'});Rq.trace.push(`Differenziale generale ${gd.code} — ${descDev(gd)}; Ra·IΔn = ${f(F.ra*F.genIdn/1000,1)} V`);if(F.ra*F.genIdn/1000>50)add('er','Ra·IΔn del differenziale generale > 50 V.')}
+     else add('er',`Nessun IDP A[S] ${F.genIdn} mA ≥ ${head.In} A.`)}}
+  }else{
+   const fIn=feedLine&&!feedLine.err?feedLine.In:0;
+   if(q.testa==='mt'){head=DEV.filter(d=>d.ser==='MT 60'&&d.poles===po&&d.curve==='C').sort((a,b)=>a.In-b.In).find(d=>d.In>=fIn);
+    if(head){Rq.head={dev:head,In:head.In,sez:false};Rq.bom.push({code:head.code,d:'Interruttore di testa — '+descDev(head),q:1,mods:head.mods,p:pdissDev(head,feedLine?.Ib||0),pg:'74-77'});Rq.trace.push(`Testa quadro: ${head.code} ${descDev(head)} (In ≥ linea ${fIn} A; nessuna selettività con la linea a monte di pari taglia)`)}}
+   else{const sz=[32,40,63].find(x=>x>=fIn);const pp=fq==3?4:2;
+    if(sz){const code=SD[pp][sz];Rq.head={code,In:sz,sez:true};Rq.bom.push({code,d:`Interruttore di manovra-sezionatore ${pp}P ${sz} A (testa quadro)`,q:1,mods:pp,p:SDP[sz]*pp*Math.pow(Math.min(feedLine?.Ib||0,sz)/sz,2),pg:'198, 210'});
+     Rq.trace.push(`Testa quadro: sezionatore ${code} ${pp}P ${sz} A ≥ In linea ${fIn} A (protetto dalla linea a monte; Icw 12·In)`)}
+    else add('er',`${q.nome}: linea oltre 63 A, nessun sezionatore modulare.`)}
+  }
+  // SPD
+  if(q.spd==='si'){const s=SPDAC[fq==3?3:1];Rq.bom.push({code:s.code,d:s.d,q:1,mods:s.mods,p:0,pg:'172, 183'});
+   const upIn=q===root?(Rq.head?.In||0):(feedLine?.In||0);
+   if(upIn>40){const bk=DEV.find(d=>d.ser==='MT 60'&&d.poles===po&&d.curve==='C'&&d.In===40);Rq.bom.push({code:bk.code,d:'Protezione di back-up SPD — '+descDev(bk),q:1,mods:bk.mods,p:0,pg:'184'})}}
+  // circuiti
+  S.circ.filter(c=>c.q===q.id).forEach(c=>{
+   const T=TIPI[c.tipo]||TIPI.generico,Ib=ibC(c);
+   let rcd=(c.fasi==3&&T.rcd3)?T.rcd3:T.rcd;if(c.tipo==='wallbox'&&c.rdc!=='si')rcd='A[EV]';if(c.idt&&c.idt!=='auto')rcd=c.idt;
+   const ibTxt=c.fasi==3?`P·Ku/(√3·400·cosφ) = ${c.P}·${c.ku}·1000/(√3·400·${c.cos}) = ${f(Ib,2)} A`:`P·Ku/(230·cosφ) = ${c.P}·${c.ku}·1000/(230·${c.cos}) = ${f(Ib,2)} A`;
+   const r=sizeLine({nome:c.nome,Ib,ibTxt,fasi:c.fasi,L:c.L,posa:c.posa,iso:c.iso,grup:c.grup,tAmb:c.tAmb,curva:c.curva,dvMax:c.dv-dvUp,dvUp,minIn:T.minIn,minS:c.minS||T.minS,cos:c.cos,rcd,idn:30},sup,F,buDev);
+   r.trace.push(`Differenziale tipo ${rcd} 30 mA — Ra·IΔn = ${f(F.ra*0.03,2)} V ≤ 50 V ✓`);if(T.note)r.trace.push('Nota: '+T.note);
+   if(c.tipo==='wallbox'){if(c.P>7.4&&c.fasi==1)r.msgs.push(['wa',`${c.nome}: oltre 7,4 kW monofase: valutare wallbox trifase.`]);if(c.P>=F.P*0.7)add('wa',`${c.nome}: ${c.P} kW su contratto da ${F.P} kW → gestione dinamica della potenza (DPM) indispensabile, altrimenti il limitatore interviene.`)}
+   Rq.lines.push({kind:'U',nome:c.nome,tipo:T.l,fase:c._fase,fasi:c.fasi,Ib,rcd,idn:30,curva:c.curva,...r});r.msgs.forEach(x=>R.msgs.push(x))});
+  // inverter
+  S.inv.filter(v=>v.q===q.id).forEach(v=>{
+   const r=sizeLine({nome:v.nome,Ib:v.iac,ibTxt:`Iac max da datasheet = ${f(v.iac,1)} A`,fasi:v.fasi,L:v.L,posa:v.posa,iso:v.iso,grup:v.grup,tAmb:v.tAmb,curva:v.curva,dvMax:v.dv,dvUp:0,minIn:6,maxIn:v.ocpd,minS:2.5,cos:1,rcd:v.rcd,idn:+v.idn},sup,F,buDev);
+   r.trace.push(`Differenziale tipo ${v.rcd} ${v.idn} mA — Ra·IΔn = ${f(F.ra*v.idn/1000,2)} V`);
+   for(let k=0;k<v.n;k++)Rq.lines.push({kind:'G',nome:v.n>1?`${v.nome} (${k+1}/${v.n})`:v.nome,tipo:'Inverter FV',fase:v._fase,fasi:v.fasi,Ib:v.iac,rcd:v.rcd,idn:+v.idn,curva:v.curva,...r});
+   r.msgs.forEach(x=>R.msgs.push(x));dcOf(v)});
+  // linee verso i sottoquadri
+  const children=kids(q.id);
+  children.forEach(k=>{
+   const fd=k.feeder,fk=k._fasi;
+   const Ib=Math.max(fk==3?maxPh(k._load.c):(fq==3?k._load.c[k._fase]:k._load.c.L1),fk==3?maxPh(k._load.g):(fq==3?k._load.g[k._fase]:k._load.g.L1));
+   const rcd=fd.rcd==='S'?'A[S]':'none';
+   const mxDn=estMaxIn(k),minF=fd.selAmp!=='no'?(STD_IN.find(x=>x>mxDn)||63):6;
+   const r=sizeLine({nome:'Linea → '+k.nome,Ib,ibTxt:`Σ correnti del quadro "${k.nome}" sulla fase più carica × Kc ${k.kc} = ${f(Ib,2)} A (o immissione FV se maggiore)`,fasi:fk,L:fd.L,posa:fd.posa,iso:fd.iso,grup:fd.grup,tAmb:fd.tAmb,curva:fd.curva,dvMax:fd.dv,dvUp:0,minIn:minF,minS:2.5,cos:0.95,rcd,idn:300},sup,F,buDev);
+   if(fd.selAmp!=='no'&&!r.err)r.trace.splice(2,0,`Selettività sul sovraccarico: In linea > protezione più grande a valle (${mxDn} A) → In ≥ ${minF} A`);
+   if(q===root&&Rq.head&&!r.err&&r.In>=Rq.head.In)add('wa',`Linea → ${k.nome}: In ${r.In} A ≥ generale ${Rq.head.In} A — sul sovraccarico interviene prima il generale.`);
+   if(rcd==='none')r.trace.push('Linea senza differenziale: protezione contro i contatti indiretti per doppio isolamento (classe II) fino al quadro di arrivo.');
+   else r.trace.push(`Differenziale selettivo A[S] 300 mA sulla linea.`);
+   const line={kind:'F',nome:'Linea → '+k.nome,child:k.id,tipo:'Alimentazione sottoquadro',fase:fk==3?'L1-L2-L3':k._fase,fasi:fk,Ib,rcd:rcd==='none'?'—':'A[S]',idn:rcd==='none'?0:300,curva:fd.curva,...r};
+   Rq.lines.push(line);r.msgs.forEach(x=>R.msgs.push(x));
+   if(rcd==='none')add('in',`Linea → ${k.nome}: senza differenziale (scelta consigliata in TT con differenziali nel sottoquadro). Posare in classe II: cavo con guaina (es. FG16OR16 / FG16OM16) in tubo isolante, centralino di arrivo in classe II.`);
+   else{const dn=S.circ.filter(c=>subtree(k).some(x=>x.id===c.q));if(dn.some(c=>{const T=TIPI[c.tipo];return c.idt==='B'||c.idt==='A[EV]'||(c.fasi==3&&T.rcd3==='B'&&c.idt==='auto')||(c.tipo==='wallbox'&&c.rdc!=='si')}))add('wa',`Linea → ${k.nome}: differenziale A[S] a monte di differenziali tipo B/A[EV]: rischio di accecamento da corrente continua. Preferire la linea senza differenziale in classe II.`)}
+   if(r.err){procQ(k,supplyChild(sup,fd.L,4,fk),null,dvUp+fd.dv,line);return}
+   const csup=supplyChild(sup,fd.L,r.S,fk);
+   // selettività
+   const thr=MAGLOW[fd.curva]*r.In,IccK=csup.IccQ*1000;
+   const dnIn=S.circ.filter(c=>c.q===k.id).map(c=>0);
+   r.trace.push(`Selettività sovraccarico: In linea ${r.In} A vs protezioni nel quadro "${k.nome}"`);
+   r.trace.push(`Selettività cortocircuito: soglia magnetica minima a monte ${MAGLOW[fd.curva]}·In = ${thr} A; Icc max nel quadro di arrivo ${f(IccK,0)} A → ${IccK<thr?'selettività totale':'selettività parziale fino a '+thr+' A'}`);
+   line.selPar=IccK>=thr;line.selThr=thr;
+   procQ(k,csup,r.sol.prot,dvUp+r.dv,line);
+   const RQk=R.Q[k.id];const mx=Math.max(0,...RQk.lines.map(l=>l.In||0));
+   if(mx>=r.In)add('wa',`Linea → ${k.nome}: In ${r.In} A non superiore alla protezione più grande a valle (${mx} A): nessuna selettività sul sovraccarico.`);
+  });
+  // SPI/DDI
+  if(R.spiExt&&R.spiQ===q.id){const Ig=maxPh(q._load.g);const ci=[25,40,63].find(x=>x>=Ig)||63;
+   Rq.bom.push({code:'(SPI)',d:`SPI esterno certificato CEI 0-21 ${fq==3?'trifase':'monofase'} — modello del costruttore scelto`,q:1,mods:4,p:+F.spiP,aux:1,pg:'—'});
+   Rq.bom.push({code:CTR[fq==3?3:1][ci],d:`DDI: contattore CTR${ci} ${fq==3?'4NA':'2NA'} AC-1 bobina 230 V`,q:1,mods:CTRM[ci],p:PD.CTR[ci]*(fq==3?4:2)*Math.pow(Math.min(Ig,ci)/ci,2)+2.6,aux:1,pg:'200'});
+   add('wa',`Contattore DDI: corrente condizionata 3 kA con fusibili gL dichiarata; verificare il coordinamento con Icc ${f(sup.IccQ,2)} kA.`)}
+  // distinta e centralino
+  Rq.lines.forEach(l=>{if(l.err||!l.sol)return;l.sol.items.forEach(d=>Rq.bom.push({code:d.code,d:descDev(d)+' · '+l.nome,q:1,mods:d.mods,p:pdissDev(d,l.Ib,l.sol.bdRole||l.sol.prot.In),pg:String(d.pg)}))});
+  const mods=Rq.bom.reduce((a,b)=>a+b.mods*b.q,0),Pdp=Rq.bom.filter(b=>!b.aux).reduce((a,b)=>a+b.p*b.q,0),Pau=Rq.bom.filter(b=>b.aux).reduce((a,b)=>a+b.p*b.q,0),Ptot=1.2*Pdp+Pau;
+  const kr=1+(+q.ris||0)/100,E=ENC[q.pos]||ENC.parete;let enc;
+  if(q.size==='auto')enc=E.t.find(e=>e.mod>=mods*kr&&e.p>=Ptot)||E.t.find(e=>e.mod>=mods*kr);
+  else enc=E.t.find(e=>e.mod===+q.size)||null;
+  Rq.enc=enc;Rq.E=E;Rq.mods=mods;Rq.Pdp=Pdp;Rq.Pau=Pau;Rq.Ptot=Ptot;Rq.kr=kr;
+  Rq.okMod=enc&&enc.mod>=mods*kr;Rq.okP=enc&&enc.p>=Ptot;
+  if(!enc)add('er',`${q.nome}: ${q.size==='auto'?`${f(mods,1)} moduli (+${q.ris}% = ${f(mods*kr,0)}) oltre la taglia massima ${E.nome}`:`taglia ${q.size} moduli non disponibile per ${E.nome}`}.`);
+  else{if(!Rq.okMod)add('er',`${q.nome}: centralino ${enc.mod} moduli insufficiente (${f(mods,1)} occupati, ${f(mods*kr,1)} con riserva ${q.ris}%).`);
+   if(!Rq.okP)add('er',`${q.nome}: potenza dissipata ${f(Ptot,1)} W > ${enc.p} W del centralino ${enc.mod} moduli.`);
+   if(enc.ver)add('wa',`${q.nome}: centralino IP65 ${enc.c.fume} — confermare codice e potenza dissipabile sulla scheda Gewiss.`)}
+  return Rq;
+ }
+ function dcOf(v){const M=S.mod;
+  v.mppt.forEach((mp,j)=>{
+   const voc=mp.ns*M.voc*(1+M.beta/100*(S.tmin-25)),isc=mp.np*M.isc,d={inv:v.nome,mppt:j+1,ns:mp.ns,np:mp.np,voc,isc,trace:[]};
+   d.trace.push(`Voc max = ${mp.ns}·${M.voc}·[1+(${M.beta}/100)·(${S.tmin}−25)] = ${f(voc,0)} V`);
+   d.vOk=voc<=v.vdc&&voc<=M.vsys;d.trace.push(`≤ ${v.vdc} V inverter e ${M.vsys} V modulo → ${d.vOk?'✓':'✗'}`);if(!d.vOk)add('er',`${v.nome} MPPT ${j+1}: Voc ${f(voc,0)} V oltre i limiti.`);
+   d.iOk=isc<=v.iscm;d.trace.push(`Isc MPPT ${f(isc,1)} A ≤ ${v.iscm} A → ${d.iOk?'✓':'✗'}`);if(!d.iOk)add('er',`${v.nome} MPPT ${j+1}: Isc ${f(isc,1)} A oltre il massimo dell'ingresso.`);
+   const rev=(mp.np-1)*M.isc;d.fuse=mp.np>=2&&rev>M.irev;
+   if(d.fuse){const lo=1.5*M.isc,hi=Math.min(2.4*M.isc,M.irev),g=GPV.find(x=>x[0]>=lo&&x[0]<=hi);d.fIn=g?.[0];d.fCode=g?.[1];d.trace.push(`Corrente inversa ${f(rev,1)} A > ${M.irev} A → gPV ${g?g[0]+' A '+g[1]:'nessuna taglia'}`);if(!g)add('er',`${v.nome} MPPT ${j+1}: nessun fusibile gPV Gewiss compatibile.`)}
+   else d.trace.push(`Corrente inversa ${f(rev,1)} A ≤ ${M.irev} A → fusibili non necessari`);
+   if(v.dcsw!=='si'){const Ie=1.25*isc,V=Math.max(500,Math.ceil(voc/100)*100),i2=SEZDC2[V];
+    if(voc<=600&&i2&&Ie<=i2)d.sez={code:'GW96186',d:'Sezionatore DC 2P 25 A 600 V (DC-21B)',mods:3.5,p:5};else if(voc<=1000&&Ie<=32)d.sez={code:'GW96187',d:'Sezionatore DC 4P 32 A 1000 V, 4 poli in serie (DC-21B)',mods:3.5,p:16};
+    if(!d.sez)add('er',`${v.nome} MPPT ${j+1}: nessun sezionatore DC Gewiss adatto.`);add('wa','Sezionatori DC Gewiss in DC-21B: verificare se serve DC-PV2 (IEC 60947-3).')}
+   if(v.spddc!=='si')d.spd=voc<=600?{code:'GWD6426',d:'SPD DC tipo 2 600 V'}:voc<=1000?{code:'GWD6428',d:'SPD DC tipo 2 1000 V'}:null;
+   R.dc.push(d);
+   if(d.fuse&&d.fCode){R.box.push({code:'GW96227',d:`Portafusibili 2P 20 A 1000 V DC — ${v.nome} MPPT ${j+1}`,q:d.np,mods:2,p:3});R.box.push({code:d.fCode,d:`Fusibile gPV ${d.fIn} A 1000 V`,q:d.np*2,mods:0,p:0})}
+   if(d.sez)R.box.push({code:d.sez.code,d:d.sez.d+` — ${v.nome} MPPT ${j+1}`,q:1,mods:d.sez.mods,p:d.sez.p});
+   if(d.spd)R.box.push({code:d.spd.code,d:d.spd.d+` — ${v.nome} MPPT ${j+1}`,q:1,mods:3,p:0})})}
+ procQ(root,supplyRoot(F),null,0,null);
+ // verifiche globali
+ Object.values(R.Q).forEach(Rq=>Rq.lines.forEach(l=>{if(l.idn&&F.ra*l.idn/1000>50)add('er',`${l.nome}: Ra·IΔn = ${f(F.ra*l.idn/1000,1)} V > 50 V.`)}));
+ if(tri){const v=Object.values(ph);const sq=Math.max(...v)-Math.min(...v);if(sq>3)add('wa',`Squilibrio tra le fasi (P·Ku·Kc): ${['L1','L2','L3'].map(k=>k+' '+f(ph[k],1)+' kW').join(', ')}. Con soli due quadri monofase una fase resta senza carichi monofase: spostare un circuito pesante (induzione, boiler) su quella fase o alimentare un quadro casa in trifase.`)}
+ if(R.box.length){const m=R.box.reduce((a,b)=>a+b.mods*b.q,0),p=R.box.reduce((a,b)=>a+b.p*b.q,0)*1.2,e=ENC.esterno.t.find(x=>x.mod>=m*1.2);R.boxQ={m,p,e,ok:e&&e.p>=p};if(!e)add('er','String box oltre 36 moduli.');else if(!R.boxQ.ok)add('er','String box: potenza dissipata oltre il centralino.')}
+ R.root=root.id;R.sup=R.Q[root.id].sup;
+ return R;
+}
+
+/* ===================== MODELLI E SOTTOQUADRI TIPICI ===================== */
+const QB=(nome,fasi,pos,o={})=>Object.assign({nome,fasi,fase:'auto',pos,porta:'fume',size:'auto',ris:20,spd:'no',testa:'sez',kc:1,feeder:Object.assign({},FEED0)},o);
+const PRESET={
+ vuoto3:{l:'Vuoto trifase',q:QB('Sottoquadro trifase',3,'parete'),c:q=>[]},
+ vuoto1:{l:'Vuoto monofase',q:QB('Sottoquadro monofase',1,'parete'),c:q=>[]},
+ casa1:{l:'Casa monofase (circuiti tipo)',q:QB('Quadro casa',1,'incasso',{kc:0.5,porta:'cieca'}),c:q=>CASA(q).map(c=>Object.assign(c,{fasi:1}))},
+ casa3:{l:'Casa trifase (circuiti tipo)',q:QB('Quadro casa',3,'incasso',{kc:0.5,porta:'cieca'}),c:q=>CASA(q)},
+ wb1:{l:'Wallbox monofase 7,4 kW',q:QB('Quadro wallbox',1,'esterno',{feeder:Object.assign({},FEED0,{L:15,posa:'B2'})}),c:q=>[cir(q,'Wallbox 7,4 kW','wallbox',7.4,{L:5,grup:1})]},
+ wb3:{l:'Wallbox trifase 11 kW',q:QB('Quadro wallbox',3,'esterno',{feeder:Object.assign({},FEED0,{L:15,posa:'B2'})}),c:q=>[cir(q,'Wallbox 11 kW','wallbox',11,{fasi:3,L:5,grup:1})]},
+ pdc3:{l:'Pompa di calore trifase',q:QB('Quadro pompa di calore',3,'esterno',{feeder:Object.assign({},FEED0,{L:12,posa:'B2'})}),c:q=>[cir(q,'Pompa di calore','pdc',5,{fasi:3,L:4,grup:1}),cir(q,'Ausiliari / termoregolazione','ausiliari',0.3,{L:5,grup:1})]},
+ pdc1:{l:'Pompa di calore monofase',q:QB('Quadro pompa di calore',1,'esterno',{feeder:Object.assign({},FEED0,{L:12,posa:'B2'})}),c:q=>[cir(q,'Pompa di calore','pdc',3,{L:4,grup:1}),cir(q,'Ausiliari / termoregolazione','ausiliari',0.3,{L:5,grup:1})]},
+ garage:{l:'Garage / esterno',q:QB('Quadro garage',1,'esterno'),c:q=>[cir(q,'Luci esterne','esterno',0.5,{L:20,grup:2}),cir(q,'Prese garage','esterno',2,{ku:0.5,L:10,grup:2}),cir(q,'Cancello / basculante','motore',0.5,{L:15,grup:2})]},
+ fv:{l:'Quadro FV lato AC',q:QB('Quadro FV',3,'parete',{feeder:Object.assign({},FEED0,{L:5})}),c:q=>[],inv:q=>[Object.assign({},INV0,{q})]}
+};
+function newFromTpl(k){if(!k)return;if(!confirm('Creare un nuovo progetto? Il progetto attuale va esportato prima se serve.'))return;
+ S=migrate(k==='mono'?tplMono():k==='tri'?tplTri():k==='villa'?tplVilla():defaults());curTab='t-forn';renderAll()}
+function addPreset(k){const P=PRESET[k];if(!P)return;let n=1,id;do{id='Q'+(++n)}while(S.quadri.some(q=>q.id===id));
+ const parent=$('#qparent')?.value||S.quadri[0].id;const q=Object.assign(JSON.parse(JSON.stringify(P.q)),{id,parent});if(S.forn.fasi!=3)q.fasi=1;
+ S.quadri.push(q);S.circ.push(...P.c(id));if(P.inv)S.inv.push(...P.inv(id));renderQd();renderCirc();renderPV();recalc()}
+function dupQ(i){const q=S.quadri[i];let n=1,id;do{id='Q'+(++n)}while(S.quadri.some(x=>x.id===id));
+ S.quadri.push(Object.assign(JSON.parse(JSON.stringify(q)),{id,nome:q.nome+' (copia)'}));S.circ.filter(c=>c.q===q.id).map(c=>Object.assign({},c,{q:id})).forEach(c=>S.circ.push(c));renderQd();renderCirc();renderPV();recalc()}
+/* ===================== RENDER INPUT ===================== */
+function renderNav(){$('#nav').innerHTML=TABS.map(([id,t])=>`<button data-tab="${id}">${t}</button>`).join('');document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab))}
+let curTab='t-forn';
+function showTab(id){curTab=id;document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id===id));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===id))}
+const qSel=()=>S.quadri.map(q=>[q.id,q.nome]);
+function renderForn(){const F='forn.';
+ $('#t-forn').innerHTML=`<div class="card"><h2>Fornitura</h2><div class="grid">
+ ${inp(F+'cliente',{l:'Cliente / impianto',txt:1})}${inp(F+'commessa',{l:'Commessa',txt:1})}
+ ${inp(F+'fasi',{l:'Fornitura',n:1,sel:[[3,'Trifase 400 V'],[1,'Monofase 230 V']]})}
+ ${inp(F+'P',{l:'Potenza contrattuale (kW)'})}
+ ${inp(F+'icc',{l:S.forn.fasi==3?'Icc trifase al punto di consegna (kA)':'Icc al punto di consegna (kA)',h:'Default CEI 0-21: 10 kA tri / 6 kA mono (probabile)'})}
+ ${S.forn.fasi==3?inp(F+'iccFN',{l:'Icc fase-neutro al punto di consegna (kA)',h:'Per i circuiti monofase. Default prudenziale 6 kA (ipotesi)'}):''}
+ ${inp(F+'ra',{l:'Resistenza di terra Ra (Ω)'})}
+ ${inp(F+'tq',{l:'Temperatura interna quadri (°C)',h:'Per il declassamento da catalogo'})}</div></div>
+ <div class="card"><h2>Montante (contatore → quadro generale)</h2><div class="grid">
+ ${inp(F+'montL',{l:'Lunghezza (m)'})}${inp(F+'montS',{l:'Sezione fase (mm²)',n:1,sel:SEZ})}
+ ${inp(F+'montPosa',{l:'Posa',sel:SEL_POSA})}${inp(F+'montIso',{l:'Isolante',sel:SEL_ISO})}</div></div>
+ <div class="card"><h2>Quadro generale — protezioni</h2><div class="grid">
+ ${inp(F+'genDiff',{l:'Generale',sel:[['no','Magnetotermico (differenziali a valle) — consigliato in TT'],['S','Magnetotermico + differenziale selettivo A[S]']]})}
+ ${S.forn.genDiff==='S'?inp(F+'genIdn',{l:'IΔn differenziale generale (mA)',n:1,sel:[300,500]}):''}
+ ${inp(F+'spiP',{l:'Potenza dissipata SPI esterno (W)',h:'Solo se serve SPI esterno'})}</div></div>`;}
+function renderQd(){
+ const SZ=[['auto','Auto'],[12,'12'],[24,'24'],[36,'36'],[54,'54'],[72,'72']];
+ const rows=S.quadri.map((q,i)=>{const p=`quadri.${i}.`,isRoot=!q.parent,fd=q.feeder;
+  return`<div class="inv"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b>${esc(q.nome)}</b> ${isRoot?'<span class="tag">quadro generale</span>':`<span class="tag">alimentato da: ${esc(qName(q.parent))}</span>`}
+  <span>${isRoot?'':`<button class="sec" onclick="dupQ(${i})">Duplica</button> <button class="del" onclick="delQ(${i})">Rimuovi</button>`}</span></div>
+  <div class="grid" style="margin-top:8px">
+  ${inp(p+'nome',{l:'Nome',txt:1})}
+  ${isRoot?'':inp(p+'parent',{l:'Alimentato da',sel:S.quadri.filter(x=>x.id!==q.id).map(x=>[x.id,x.nome])})}
+  ${isRoot||S.forn.fasi!=3?'':inp(p+'fasi',{l:'Sistema',n:1,sel:[[3,'Trifase'],[1,'Monofase']]})}
+  ${!isRoot&&S.forn.fasi==3&&q.fasi==1?inp(p+'fase',{l:'Fase',sel:['auto','L1','L2','L3']}):''}
+  ${inp(p+'pos',{l:'Posizione / centralino',sel:[['parete','Parete — 40 CD IP40'],['incasso','Incasso — 40 CDI IP40'],['esterno','Esterno — stagno IP65']]})}
+  ${inp(p+'porta',{l:'Porta',sel:[['fume','Fumè'],['cieca','Cieca']]})}
+  ${inp(p+'size',{l:'Taglia (moduli)',sel:SZ,h:'Auto = la più piccola che passa le verifiche'})}
+  ${inp(p+'ris',{l:'Riserva moduli (%)'})}
+  ${inp(p+'spd',{l:'SPD tipo 2',sel:SEL_SN})}
+  ${inp(p+'kc',{l:'Contemporaneità Kc',h:'Applicata alla somma dei carichi del quadro'})}
+  ${isRoot?'':inp(p+'testa',{l:'Dispositivo di testa',sel:[['sez','Sezionatore (linea protetta a monte)'],['mt','Magnetotermico']]})}
+  </div>
+  ${isRoot?'':`<h3>Linea di alimentazione da "${esc(qName(q.parent))}"</h3><div class="grid">
+  ${inp(p+'feeder.L',{l:'Lunghezza (m)'})}${inp(p+'feeder.posa',{l:'Posa',sel:Object.keys(POSE)})}${inp(p+'feeder.iso',{l:'Isolante',sel:SEL_ISO})}
+  ${inp(p+'feeder.grup',{l:'Circuiti raggruppati'})}${inp(p+'feeder.tAmb',{l:'T ambiente (°C)'})}${inp(p+'feeder.curva',{l:'Curva',sel:[['C','C'],['D','D (più selettiva)']]})}
+  ${inp(p+'feeder.dv',{l:'ΔV max linea (%)',h:'Si somma ai circuiti a valle (limite 4% totale)'})}
+  ${inp(p+'feeder.rcd',{l:'Differenziale sulla linea',sel:[['none','Nessuno — linea in classe II (consigliato)'],['S','A[S] selettivo 300 mA']]})}
+  ${inp(p+'feeder.selAmp',{l:'Selettività sul sovraccarico',sel:[['si','Sì — In linea > protezioni a valle'],['no','No — In su Ib']]})}</div>`}</div>`}).join('');
+ $('#t-qd').innerHTML=`<div class="card"><h2>Quadri dell'impianto</h2>${rows}
+ <div class="grid" style="align-items:end"><label>Aggiungi sottoquadro<select id="qpreset">${Object.entries(PRESET).map(([k,v])=>`<option value="${k}">${v.l}</option>`).join('')}</select></label>
+ <label>Alimentato da<select id="qparent">${S.quadri.map(q=>`<option value="${q.id}">${esc(q.nome)}</option>`).join('')}</select></label>
+ <div><button onclick="addPreset($('#qpreset').value)">+ Aggiungi</button></div></div>
+ <p class="disc">Ogni sottoquadro ha la sua linea protetta nel quadro a monte e un dispositivo di testa. Icc, caduta di tensione e back-up si calcolano in cascata.</p></div>`;}
+function addQ(fz){const n=S.quadri.length;let id='Q'+(n+1);while(S.quadri.some(q=>q.id===id))id+='b';
+ S.quadri.push({id,nome:'Nuovo quadro '+(fz==3?'trifase':'monofase'),parent:S.quadri[0].id,fasi:S.forn.fasi==3?fz:1,fase:'auto',pos:'parete',porta:'fume',size:'auto',ris:20,spd:'no',testa:'sez',kc:1,feeder:Object.assign({},FEED0)});renderQd();renderCirc();renderPV();recalc()}
+function delQ(i){const q=S.quadri[i];if(!confirm(`Rimuovere "${q.nome}"? Circuiti e sottoquadri passano a "${qName(q.parent)}".`))return;
+ S.circ.forEach(c=>{if(c.q===q.id)c.q=q.parent});S.inv.forEach(v=>{if(v.q===q.id)v.q=q.parent});S.quadri.forEach(x=>{if(x.parent===q.id)x.parent=q.parent});S.quadri.splice(i,1);renderQd();renderCirc();renderPV();recalc()}
+function renderCirc(){
+ const ord=S.circ.map((c,i)=>i).sort((a,b)=>S.quadri.findIndex(q=>q.id===S.circ[a].q)-S.quadri.findIndex(q=>q.id===S.circ[b].q));
+ let lastQ=null;const rows=ord.map(i=>{const c=S.circ[i];const gh=c.q!==lastQ?`<tr class="grp"><td colspan="18">${esc(qName(c.q))}</td></tr>`:'';lastQ=c.q;return gh+row(i)}).join('');
+ function row(i){const c=S.circ[i],p=`circ.${i}.`,qq=S.quadri.find(q=>q.id===c.q),mono=S.forn.fasi!=3||(qq&&qq.parent&&qq.fasi==1);return`<tr>
+ <td>${inp(p+'q',{bare:1,sel:qSel()})}</td>
+ <td>${inp(p+'nome',{txt:1,bare:1})}</td><td>${inp(p+'tipo',{bare:1,sel:Object.entries(TIPI).map(([k,v])=>[k,v.l])})}</td>
+ <td>${inp(p+'P',{bare:1})}</td><td>${inp(p+'cos',{bare:1})}</td><td>${inp(p+'ku',{bare:1})}</td>
+ <td>${mono?'1F':inp(p+'fasi',{bare:1,n:1,sel:[[1,'1F'],[3,'3F']]})}</td>
+ <td>${!mono&&c.fasi!=3?inp(p+'fase',{bare:1,sel:['auto','L1','L2','L3']}):'—'}</td>
+ <td>${inp(p+'L',{bare:1})}</td><td>${inp(p+'posa',{bare:1,sel:Object.keys(POSE)})}</td><td>${inp(p+'iso',{bare:1,sel:SEL_ISO})}</td>
+ <td>${inp(p+'grup',{bare:1})}</td><td>${inp(p+'tAmb',{bare:1})}</td><td>${inp(p+'curva',{bare:1,sel:['B','C','D']})}</td><td>${inp(p+'dv',{bare:1})}</td>
+ <td>${inp(p+'idt',{bare:1,sel:[['auto','Auto'],'A','A[IR]','F','B','A[EV]']})}</td>
+ <td>${c.tipo==='wallbox'?inp(p+'rdc',{bare:1,sel:SEL_SN}):'—'}</td>
+ <td><button class="del" onclick="S.circ.splice(${i},1);renderCirc();recalc()">✕</button></td></tr>`}
+ $('#t-circ').innerHTML=`<div class="card"><h2>Circuiti utilizzatori</h2><div class="tw"><table>
+ <tr><th>Quadro</th><th>Nome</th><th>Tipo</th><th>P (kW)</th><th>cosφ</th><th>Ku</th><th>Fasi</th><th>Fase</th><th>L (m)</th><th>Posa</th><th>Isolante</th><th>Raggr.</th><th>T amb</th><th>Curva</th><th>ΔV % tot.</th><th>Tipo Id</th><th>RDC-DD</th><th></th></tr>
+ ${rows}</table></div><div class="grid" style="align-items:end"><label>Nel quadro<select id="cq">${qSel().map(([v,n])=>`<option value="${v}">${esc(n)}</option>`).join('')}</select></label>
+ <label>Tipo<select id="ct">${Object.entries(TIPI).map(([k,v])=>`<option value="${k}">${v.l}</option>`).join('')}</select></label>
+ <div><button onclick="const tp=$('#ct').value;S.circ.push(cir($('#cq').value,TIPI[tp].l,tp,1));renderCirc();recalc()">+ Aggiungi circuito</button></div></div>
+ ${S.circ.length?'':'<p class="disc">Nessun circuito: aggiungine uno o parti da un modello (menu "Nuovo progetto…").</p>'}
+ <p class="disc">ΔV % tot. = limite dalla consegna al carico (comprende le linee dei sottoquadri). Nei quadri monofase i circuiti prendono la fase del quadro. Tipo Id "Auto" = scelta per tipo di carico; impostarlo a mano se il costruttore dichiara diversamente.</p></div>`;}
+function renderPV(){const M='mod.';
+ const invs=S.inv.map((v,i)=>{const p=`inv.${i}.`,qq=S.quadri.find(q=>q.id===v.q),mono=S.forn.fasi!=3||(qq&&qq.parent&&qq.fasi==1);
+ return`<div class="inv"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b>${esc(v.nome)}</b>
+ <span><button class="sec" onclick="LIB.push(JSON.parse(JSON.stringify(S.inv[${i}])));saveLS();renderPV()">Salva in libreria</button> <button class="del" onclick="S.inv.splice(${i},1);renderPV();recalc()">Rimuovi</button></span></div>
+ <div class="grid">
+ ${inp(p+'q',{l:'Quadro di collegamento',sel:qSel()})}${inp(p+'nome',{l:'Modello',txt:1})}${inp(p+'n',{l:'Quantità identici'})}
+ ${mono?'':inp(p+'fasi',{l:'Uscita AC',n:1,sel:[[3,'Trifase'],[1,'Monofase']]})}
+ ${!mono&&v.fasi!=3?inp(p+'fase',{l:'Fase',sel:['auto','L1','L2','L3']}):''}
+ ${inp(p+'pac',{l:'Pac nominale (kW)'})}${inp(p+'iac',{l:'Iac max uscita (A)'})}
+ ${inp(p+'ocpd',{l:'Protezione max ammessa (A)'})}${inp(p+'curva',{l:'Curva',sel:['B','C']})}
+ ${inp(p+'spi',{l:'SPI integrato CEI 0-21',sel:SEL_SN})}
+ ${inp(p+'rcd',{l:'Tipo differenziale',sel:[['A','A'],['A[IR]','A[IR]'],['B','B']]})}${inp(p+'idn',{l:'IΔn (mA)',n:1,sel:[30,100,300]})}
+ ${inp(p+'vdc',{l:'Vdc max (V)'})}${inp(p+'iscm',{l:'Isc max per MPPT (A)'})}
+ ${inp(p+'dcsw',{l:'Sezionatore DC integrato',sel:SEL_SN})}${inp(p+'spddc',{l:'SPD DC integrato',sel:SEL_SN})}
+ ${inp(p+'L',{l:'Linea AC: lunghezza (m)'})}${inp(p+'posa',{l:'Posa',sel:Object.keys(POSE)})}${inp(p+'iso',{l:'Isolante',sel:SEL_ISO})}
+ ${inp(p+'grup',{l:'Raggruppati'})}${inp(p+'tAmb',{l:'T ambiente (°C)'})}${inp(p+'dv',{l:'ΔV max (%)',h:'Consigliato ≤ 1–1,5%'})}
+ </div><h3>Stringhe per MPPT</h3><table><tr><th>MPPT</th><th>Moduli in serie</th><th>Stringhe in parallelo</th><th></th></tr>
+ ${v.mppt.map((m,j)=>`<tr><td>${j+1}</td><td>${inp(p+`mppt.${j}.ns`,{bare:1})}</td><td>${inp(p+`mppt.${j}.np`,{bare:1})}</td><td><button class="del" onclick="S.inv[${i}].mppt.splice(${j},1);renderPV();recalc()">✕</button></td></tr>`).join('')}
+ </table><p><button class="sec" onclick="S.inv[${i}].mppt.push({ns:10,np:1});renderPV();recalc()">+ MPPT</button></p></div>`}).join('');
+ $('#t-pv').innerHTML=`<div class="card"><h2>Modulo FV e sito</h2><div class="grid">
+ ${inp(M+'voc',{l:'Voc STC (V)'})}${inp(M+'isc',{l:'Isc STC (A)'})}${inp(M+'beta',{l:'βVoc (%/°C)'})}
+ ${inp(M+'irev',{l:'Corrente inversa max (A)'})}${inp(M+'vsys',{l:'Tensione max sistema (V)',n:1,sel:[1000,1500]})}${inp('tmin',{l:'Temperatura minima sito (°C)'})}</div></div>
+ <div class="card"><h2>Inverter</h2>${invs||'<p class="disc">Nessun inverter.</p>'}
+ <p><button onclick="S.inv.push({q:S.quadri[0].id,nome:'Inverter FV '+(S.inv.length+1),n:1,fasi:S.forn.fasi,pac:6,iac:10,ocpd:16,curva:'C',spi:'si',rcd:'A',idn:300,fase:'auto',L:15,posa:'B1',iso:'PVC',grup:1,tAmb:30,dv:1.5,vdc:1000,iscm:20,dcsw:'si',spddc:'si',mppt:[{ns:10,np:1}]});renderPV();recalc()">+ Aggiungi inverter</button>
+ ${LIB.length?`<select id="libsel" style="width:auto">${LIB.map((x,k)=>`<option value="${k}">${esc(x.nome)} · ${x.pac} kW</option>`).join('')}</select>
+ <button class="sec" onclick="S.inv.push(JSON.parse(JSON.stringify(LIB[+$('#libsel').value])));renderPV();recalc()">Inserisci da libreria</button>
+ <button class="del" onclick="LIB.splice(+$('#libsel').value,1);saveLS();renderPV()">Elimina da libreria</button>`:''}</p></div>`;}
+
+/* ===================== RENDER RISULTATI ===================== */
+const st=(ok,ver)=>ok?'<span class="ok">OK</span>':ver?'<span class="wa">Verificare</span>':'<span class="er">KO</span>';
+function linesTable(Rq){
+ return`<div class="tw"><table><tr><th>Circuito</th><th>Fase</th><th class="n">Ib (A)</th><th>Codici</th><th>Protezione</th><th class="n">Icn kA</th><th>Differenziale</th><th class="n">Cavo mm²</th><th class="n">ΔV %</th><th>K²S²≥I²t</th><th>Icc min</th><th>Calcolo</th></tr>
+ ${Rq.lines.map(l=>l.err?`<tr><td>${esc(l.nome)}</td><td colspan="11" class="er">Errore — vedi messaggi<details><summary>traccia</summary><pre>${esc(l.trace.join('\n'))}</pre></details></td></tr>`:`<tr>
+ <td>${esc(l.nome)}<br><span class="tag">${esc(l.tipo)}</span></td><td>${l.fase}</td><td class="n">${f(l.Ib,1)}</td>
+ <td>${l.sol.items.map(d=>`<code>${d.code}</code>`).join('<br>')}</td>
+ <td>${l.sol.prot.poles} ${l.curva}${l.In}<br><span class="tag">${l.sol.kind}</span></td>
+ <td class="n">${l.sol.icOk?f(l.sol.icn,1):l.sol.bu?f(l.sol.bu,1)+' BU':'<span class="er">'+f(l.sol.icn,1)+'</span>'}</td>
+ <td>${l.idn?l.rcd+' · '+l.idn+' mA':'— (classe II)'}</td><td class="n">${l.fasi==3?'5G':'3G'}${l.S}</td><td class="n">${f(l.dv+Rq.dvUp*(l.kind==='F'?0:1),2)}</td>
+ <td>${st(l.i2t==='ok',l.i2t==='ver')}</td><td>${st(l.mag)}</td>
+ <td><details><summary>traccia</summary><pre>${esc(l.trace.join('\n'))}</pre></details></td></tr>`).join('')}</table></div>`}
+function renderRis(R){const F=S.forn;
+ const ord={er:0,wa:1,in:2};const msgs=R.msgs.filter((m,i,a)=>a.findIndex(x=>x[1]===m[1])===i).sort((a,b)=>ord[a[0]]-ord[b[0]]);
+ const nE=msgs.filter(m=>m[0]==='er').length,nW=msgs.filter(m=>m[0]==='wa').length;
+ const RG=R.Q[R.root];
+ const cards=R.order.map(id=>{const Rq=R.Q[id],q=Rq.q;return`<div class="card"><h2>${esc(q.nome)} <span class="tag">${q._fasi==3?'trifase':'monofase '+(q._fase||'')}</span> <span class="tag">${Rq.enc?Rq.enc.mod+' moduli · '+Rq.enc.c[q.porta]:'centralino —'}</span></h2>
+ <div class="kpi"><div><span>Testa</span><b>${Rq.head?(Rq.head.dev?Rq.head.dev.poles+' C'+Rq.head.In+' · '+Rq.head.dev.code:'Sez. '+Rq.head.In+' A · '+Rq.head.code):'—'}</b><span>${q.parent?'alimentato da '+esc(qName(q.parent)):'generale impianto'}</span></div>
+ <div><span>Icc nel quadro</span><b>${Rq.sup.Icc3Q?f(Rq.sup.Icc3Q,2)+' kA 3F':f(Rq.sup.IccFNQ,2)+' kA F-N'}</b><span>F-N ${f(Rq.sup.IccFNQ,2)} kA</span></div>
+ <div><span>ΔV a monte</span><b>${f(Rq.dvUp,2)} %</b><span>dalla consegna</span></div>
+ <div><span>Moduli / potenza</span><b>${f(Rq.mods,1)} mod · ${f(Rq.Ptot,1)} W</b><span>${Rq.enc?`${Rq.enc.mod} mod (${Rq.okMod?'ok':'insuff.'}) · ${Rq.enc.p} W (${Rq.okP?'ok':'insuff.'})`:'nessun centralino'}</span></div></div>
+ <details><summary>Calcolo Icc e dispositivo di testa</summary><pre>${esc(Rq.trace.join('\n'))}</pre></details>
+ ${Rq.lines.length?linesTable(Rq):'<p class="disc">Nessun circuito.</p>'}</div>`}).join('');
+ const dc=R.dc.map(d=>`<tr><td>${esc(d.inv)}</td><td>${d.mppt}</td><td>${d.ns}×${d.np}</td><td class="n">${f(d.voc,0)}</td><td>${st(d.vOk)}</td><td class="n">${f(d.isc,1)}</td><td>${st(d.iOk)}</td><td>${d.fuse?(d.fIn?'gPV '+d.fIn+' A':'KO'):'Non necessari'}</td><td><details><summary>traccia</summary><pre>${esc(d.trace.join('\n'))}</pre></details></td></tr>`).join('');
+ $('#t-ris').innerHTML=`<div class="card"><h2>Esito — ${esc(F.cliente||'Impianto')}</h2>
+ <div class="kpi"><div><span>Generale</span><b>${RG.head?.dev?RG.head.dev.poles+' C'+RG.head.In+' · '+RG.head.Icn+' kA':'—'}</b><span>${RG.head?.dev?.code||''}</span></div>
+ <div><span>Quadri</span><b>${R.order.length}</b><span>${R.order.map(id=>R.Q[id].enc?R.Q[id].enc.mod:'?').join(' + ')} moduli</span></div>
+ <div><span>Carichi per fase (P·Ku·Kc)</span><b>${F.fasi==3?['L1','L2','L3'].map(k=>f(R.ph[k],1)).join(' / '):f(R.ph.L1,1)} kW</b><span>contratto ${F.P} kW</span></div>
+ <div><span>Esito verifiche</span><b class="${nE?'er':nW?'wa':'ok'}">${nE?nE+' errori':nW?nW+' da verificare':'Conforme'}</b><span>${nW} avvisi</span></div></div>
+ <h3>Messaggi</h3>${msgs.map(m=>`<div class="msg ${m[0]}">${m[0]==='er'?'✗ ':m[0]==='wa'?'⚠ ':'ℹ '}${esc(m[1])}</div>`).join('')}</div>
+ ${cards}
+ ${R.dc.length?`<div class="card"><h2>Lato DC — stringhe</h2><div class="tw"><table><tr><th>Inverter</th><th>MPPT</th><th>Ns×Np</th><th class="n">Voc max</th><th>Tensione</th><th class="n">Isc</th><th>Corrente</th><th>Fusibili</th><th>Calcolo</th></tr>${dc}</table></div></div>`:''}
+ <p class="disc">BU = potere di interruzione in back-up (tabella Gewiss pag. 724). ΔV % = caduta cumulata dalla consegna.</p>`;}
+
+function svgArch(R){const ids=R.order;const lv={};ids.forEach(id=>{const q=R.Q[id].q;lv[id]=q.parent?lv[q.parent]+1:0});
+ const cols={};ids.forEach(id=>{(cols[lv[id]]=cols[lv[id]]||[]).push(id)});const maxN=Math.max(...Object.values(cols).map(a=>a.length));
+ const W=Math.max(560,maxN*190+120),H=(Object.keys(cols).length)*130+20,pos={};
+ Object.entries(cols).forEach(([l,a])=>a.forEach((id,i)=>{pos[id]={x:(W/(a.length))*(i+0.5),y:20+l*130}}));
+ let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px" xmlns="http://www.w3.org/2000/svg" font-size="11"><g stroke="currentColor" fill="none" style="color:var(--tx)">`;
+ ids.forEach(id=>{const q=R.Q[id].q;if(q.parent){const a=pos[q.parent],b=pos[id];s+=`<path d="M${a.x} ${a.y+62} V${(a.y+62+b.y)/2} H${b.x} V${b.y}"/>`}});
+ s+='</g>';
+ ids.forEach(id=>{const Rq=R.Q[id],q=Rq.q,p=pos[id],fl=Rq.feedLine;
+  s+=`<rect x="${p.x-85}" y="${p.y}" width="170" height="62" rx="6" fill="var(--bg)" stroke="currentColor" style="color:var(--ac)"/>
+  <text x="${p.x}" y="${p.y+16}" text-anchor="middle" font-weight="bold">${esc(q.nome.slice(0,26))}</text>
+  <text x="${p.x}" y="${p.y+32}" text-anchor="middle">${q._fasi==3?'3F':'1F '+(q._fase||'')} · ${Rq.enc?Rq.enc.mod+' moduli':'—'}</text>
+  <text x="${p.x}" y="${p.y+48}" text-anchor="middle" opacity=".8">${Rq.head?(Rq.head.dev?Rq.head.dev.code+' C'+Rq.head.In:'Sez. '+Rq.head.In+' A'):''}</text>`;
+  if(fl&&!fl.err)s+=`<text x="${p.x+6}" y="${p.y-8}" font-size="10" opacity=".85">${fl.sol.prot.poles} ${fl.curva}${fl.In} · ${fl.fasi==3?'5G':'3G'}${fl.S} · ${q.feeder.L} m</text>`});
+ return s+'</svg>'}
+function svgUnifilare(Rq){const L=Rq.lines.filter(l=>!l.err);const q=Rq.q,w=Math.max(560,190+L.length*118),h=340,hd=Rq.head;
+ let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px" xmlns="http://www.w3.org/2000/svg" font-size="10">
+ <g stroke="currentColor" fill="none" stroke-width="1.5" style="color:var(--tx)"><line x1="60" y1="10" x2="60" y2="40"/><rect x="40" y="40" width="40" height="34"/><line x1="60" y1="74" x2="60" y2="110"/><line x1="60" y1="110" x2="${w-30}" y2="110" stroke-width="3"/></g>
+ <text x="88" y="22">${q.parent?'Da '+esc(qName(q.parent)):'Da contatore — TT '+(S.forn.fasi==3?'400 V 3F+N':'230 V F+N')}</text>
+ <text x="88" y="54">${hd?(hd.dev?hd.dev.code+' '+hd.dev.poles+' C'+hd.In:hd.code+' sezionatore '+hd.In+' A'):''}</text><text x="88" y="67">${hd?.Icn?hd.Icn+' kA':''}</text>`;
+ let x=170;
+ if(q.spd==='si'){s+=`<g stroke="currentColor" fill="none" style="color:var(--tx)"><line x1="${x}" y1="110" x2="${x}" y2="150"/><path d="M${x-8} 150 h16 l-8 14 z"/><line x1="${x}" y1="164" x2="${x}" y2="180"/><line x1="${x-8}" y1="180" x2="${x+8}" y2="180"/></g><text x="${x+12}" y="160">SPD T2</text>`;x+=74}
+ L.forEach(l=>{s+=`<g stroke="currentColor" fill="none" style="color:var(--tx)"><line x1="${x}" y1="110" x2="${x}" y2="140"/><rect x="${x-14}" y="140" width="28" height="30"/><line x1="${x}" y1="170" x2="${x}" y2="258"/>${l.kind==='F'?`<rect x="${x-10}" y="258" width="20" height="16"/>`:`<circle cx="${x}" cy="266" r="8"/>`}</g>
+ <text x="${x-16}" y="184">${l.sol.prot.poles} ${l.curva}${l.In}</text><text x="${x-16}" y="196">${l.idn?'Id '+l.rcd+' '+l.idn+'mA':'senza Id (cl. II)'}</text><text x="${x-16}" y="208">${l.fasi==3?'5G':'3G'}${l.S} mm²</text><text x="${x-16}" y="220">${l.fase}</text>
+ <text x="${x-16}" y="232" opacity=".75">${l.sol.items[0].code}</text>${l.sol.items[1]?`<text x="${x-16}" y="244" opacity=".75">${l.sol.items[1].code}</text>`:''}
+ <text x="${x-16}" y="292">${esc(l.nome.replace('Linea → ','→ ').slice(0,20))}</text><text x="${x-16}" y="305" opacity=".7">${l.kind==='G'?'generatore':f(l.Ib,1)+' A'}</text>`;x+=118});
+ return s+'</svg>'}
+function renderQuadro(R){
+ const cards=R.order.map(id=>{const Rq=R.Q[id],q=Rq.q,enc=Rq.enc;
+  const bom=Rq.bom.map(b=>`<tr><td><code>${esc(b.code)}</code></td><td>${esc(b.d)}</td><td class="n">${b.q}</td><td class="n">${f(b.mods*b.q,1)}</td><td class="n">${f(b.p*b.q,2)}</td><td class="n">${esc(b.pg||'')}</td></tr>`).join('');
+  return`<div class="card"><h2>${esc(q.nome)}</h2><div class="tw">${svgUnifilare(Rq)}</div>
+  <h3>Distinta</h3><div class="tw"><table><tr><th>Codice</th><th>Componente</th><th class="n">Q.tà</th><th class="n">Moduli</th><th class="n">Pdiss (W)</th><th class="n">Pag.</th></tr>
+  ${enc?`<tr><td><code>${enc.c[q.porta]}</code></td><td>Centralino ${esc(Rq.E.nome)} ${enc.mod} moduli, classe II — potenza dissipabile ${enc.p} W</td><td class="n">1</td><td class="n">—</td><td class="n">—</td><td class="n">scheda</td></tr>`:''}
+  ${bom}<tr><th></th><th>Totale</th><th></th><th class="n">${f(Rq.mods,1)}</th><th class="n">${f(Rq.Pdp+Rq.Pau,2)}</th><th></th></tr></table></div>
+  <h3>Sovratemperatura (CEI 23-51)</h3><pre>${esc([`Moduli ${f(Rq.mods,1)}; con riserva ${q.ris}% = ${f(Rq.mods*Rq.kr,1)}${enc?' ≤ '+enc.mod+' '+(Rq.okMod?'✓':'✗'):''}`,`Ptot = 1,2·Pdp + Pau = 1,2·${f(Rq.Pdp,2)} + ${f(Rq.Pau,2)} = ${f(Rq.Ptot,2)} W${enc?' ≤ '+enc.p+' W '+(Rq.okP?'✓':'✗'):''}`,`Campo CEI 23-51: In ≤ 125 A ✓; Icc ${f(Rq.sup.IccQ,2)} kA ≤ 10 kA ${Rq.sup.IccQ<=10?'✓':'✗'}`].join('\n'))}</pre>
+  <h3>Dati di targa</h3><table><tr><th>Identificazione</th><td>${esc(q.nome)} ${S.forn.commessa?'· '+esc(S.forn.commessa):''}</td><th>Norma</th><td>CEI 23-51</td></tr>
+  <tr><th>Tensione</th><td>${q._fasi==3?'400/230 V 3F+N':'230 V F+N'} 50 Hz</td><th>Corrente nominale</th><td>${Rq.head?.In??'—'} A</td></tr>
+  <tr><th>Icc presunta ammissibile</th><td>${f(Math.max(Rq.sup.IccQ,0),1)} kA (coordinata con ${q.parent?'la linea a monte':'il generale'})</td><th>Grado IP / classe</th><td>${Rq.E.ip} · classe II</td></tr></table></div>`}).join('');
+ $('#t-quadro').innerHTML=`<div class="card"><h2>Architettura dell'impianto</h2><div class="tw">${svgArch(R)}</div></div>${cards}
+ ${R.box.length?`<div class="card"><h2>Quadro di campo DC (string box)</h2><table><tr><th>Codice</th><th>Componente</th><th class="n">Q.tà</th></tr>${R.box.map(b=>`<tr><td><code>${b.code}</code></td><td>${esc(b.d)}</td><td class="n">${b.q}</td></tr>`).join('')}</table><p class="disc">${f(R.boxQ.m,1)} moduli, Ptot ${f(R.boxQ.p,1)} W ${R.boxQ.e?'→ '+R.boxQ.e.c.fume+' '+R.boxQ.e.mod+' moduli':''}</p></div>`:''}
+ <div class="card"><h2>Prove individuali — checklist (per ogni quadro)</h2><table><tr><th>Prova</th><th>Esito</th></tr>
+ <tr><td>Ispezione a vista: cablaggio, coppie di serraggio da catalogo, siglatura, corrispondenza allo schema</td><td></td></tr>
+ <tr><td>Grado di protezione e integrità della classe II (pressacavi, coperture)</td><td></td></tr>
+ <tr><td>Continuità dei circuiti di protezione (PE)</td><td></td></tr>
+ <tr><td>Resistenza di isolamento (≥ 1 MΩ a 500 V DC)</td><td></td></tr>
+ <tr><td>Prova dei differenziali (tasto e strumento)</td><td></td></tr>
+ ${R.spiExt?'<tr><td>Funzionalità SPI/DDI con cassetta prova relè</td><td></td></tr>':''}
+ <tr><td>Documentazione: schema, distinta, targa, dichiarazione di conformità, istruzioni</td><td></td></tr></table></div>`;}
+
+function renderDB(){const row=a=>a.map(x=>`<td class="n">${x}</td>`).join('');
+ const cnt={};DEV.forEach(d=>{const k=d.ser+(d.rcd?' '+d.rcd:'');cnt[k]=(cnt[k]||0)+1});
+ $('#t-db').innerHTML=`<div class="card"><h2>Origine dei dati</h2>
+ <p class="disc">Apparecchi, sezionatori, declassamenti, potenze dissipate, curve I²t (dai tracciati vettoriali del PDF) e back-up: <b>Catalogo tecnico Gewiss Energy 2026-27</b>. Centralini: schede prodotto Gewiss. Le tabelle di selettività Gewiss riguardano solo interruttori scatolati a monte: tra modulari la selettività è valutata sulla soglia magnetica.</p>
+ <table><tr><th>Serie / tipo</th><th class="n">Codici</th></tr>${Object.entries(cnt).map(([k,v])=>`<tr><td>${k}</td><td class="n">${v}</td></tr>`).join('')}</table>
+ <h3>Certezza delle regole implementate</h3><table><tr><th>Regola</th><th>Fonte</th><th>Certezza</th></tr>
+ <tr><td>Ib ≤ In(T) ≤ Iz; If ≤ 1,45 Iz</td><td>CEI 64-8 sez. 433 + declassamento Gewiss</td><td>Certo</td></tr>
+ <tr><td>K²S² ≥ I²t</td><td>CEI 64-8 sez. 434 + curve Gewiss</td><td>Certo sul metodo; lettura ±5%</td></tr>
+ <tr><td>Icc in cascata sulle linee dei sottoquadri</td><td>Impedenze di rete e cavo (R a 20 °C)</td><td>Certo sul metodo; reattanza trascurata</td></tr>
+ <tr><td>ΔV cumulata ≤ 4%</td><td>CEI 64-8 sez. 525</td><td>Certo</td></tr>
+ <tr><td>Linee senza differenziale in classe II</td><td>CEI 64-8 sez. 412/413</td><td>Certo</td></tr>
+ <tr><td>Selettività magnetica tra modulari (soglia minima B 3·In, C 5·In, D 10·In)</td><td>EN 60898</td><td>Certo, approccio conservativo</td></tr>
+ <tr><td>Back-up</td><td>Gewiss pag. 724</td><td>Certo per le combinazioni tabellate</td></tr>
+ <tr><td>Soglia SPI 11,08 kW; Icc F-N 6 kA in trifase</td><td>CEI 0-21 / ipotesi</td><td>Probabile / ipotesi</td></tr></table></div>
+ <div class="card"><h2>Declassamento in temperatura (A)</h2>${Object.entries(DER).map(([k,t])=>`<h3>${k}</h3><div class="tw"><table><tr><th>In</th>${t.T.map(x=>`<th class="n">${x} °C</th>`).join('')}</tr>${Object.entries(t.v).map(([i,v])=>`<tr><td>${i}</td>${row(v)}</tr>`).join('')}</table></div>`).join('')}</div>
+ <div class="card"><h2>I²t (A²s) a 1 / 3 / 4,5 / 6 / 10 kA</h2>${Object.entries(I2T).map(([k,c])=>`<h3>${k}${c.env?' (inviluppo)':''} — fino a ${f(c.xmax/1000,1)} kA</h3><div class="tw"><table><tr><th>In</th>${I2T_PTS.map(x=>`<th class="n">${x/1000} kA</th>`).join('')}</tr>${Object.entries(c.t).sort((a,b)=>a[0]-b[0]).map(([i,v])=>`<tr><td>${i}</td>${row(v.map(x=>x?f(x,0):'—'))}</tr>`).join('')}</table></div>`).join('')}</div>
+ <div class="card"><h2>Centralini</h2><table><tr><th>Serie</th><th>Moduli</th><th>Codici (fumè / cieca)</th><th class="n">Potenza dissipabile (W)</th></tr>${Object.values(ENC).map(E=>E.t.map(e=>`<tr><td>${E.nome}</td><td>${e.mod}</td><td>${e.c.fume} / ${e.c.cieca}${e.ver?' — da confermare':''}</td><td class="n">${e.p}</td></tr>`).join('')).join('')}</table></div>`;}
+
+/* ===================== BINDING ===================== */
+let lastR=null;
+function recalc(){try{lastR=calc();renderRis(lastR);renderQuadro(lastR)}catch(e){console.error(e);$('#t-ris').innerHTML=`<div class="card"><div class="msg er">Errore di calcolo: ${esc(e.message)}</div></div>`}saveLS()}
+document.addEventListener('change',e=>{const k=e.target.dataset?.k;if(!k)return;
+ let v=e.target.value;if(e.target.dataset.t==='n'){v=parseFloat(String(v).replace(',','.'));if(!isFinite(v))return}
+ setP(k,v);
+ if(/^circ\.\d+\.tipo$/.test(k)){const c=getP(k.replace('.tipo',''));c.cos=TIPI[v].cos;renderCirc()}
+ if(k==='forn.fasi'){S.forn.icc=v==3?10:6;renderForn();renderQd();renderCirc();renderPV()}
+ else if(/^quadri\.\d+\.(nome|parent|fasi)$/.test(k)){renderQd();renderCirc();renderPV()}
+ else if(/^(circ|inv)\.\d+\.(fasi|q)$/.test(k)){renderCirc();renderPV()}
+ if(k==='forn.genDiff')renderForn();
+ if(/^inv\.\d+\.nome$/.test(k))renderPV();
+ recalc()});
+document.addEventListener('input',e=>{if(e.target.tagName==='INPUT'&&e.target.dataset?.t==='n'){clearTimeout(window._t);window._t=setTimeout(()=>e.target.dispatchEvent(new Event('change',{bubbles:true})),500)}});
+function renderAll(){renderNav();renderForn();renderQd();renderCirc();renderPV();renderDB();recalc();showTab(curTab)}
+renderAll();
+</script>
+</body>
+</html>
