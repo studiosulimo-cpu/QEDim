@@ -36,6 +36,15 @@ th{background:var(--th);font-weight:600}
 td input,td select{min-width:62px;padding:3px 4px}
 td select[data-k$=".q"]{min-width:150px}td input[data-k$=".nome"]{min-width:160px}td select[data-k$=".tipo"]{min-width:160px}
 tr.grp td{background:var(--th);font-weight:600}
+.chead,.crow{display:grid;gap:4px;align-items:center}
+.chead{font-size:11px;font-weight:600;color:var(--mu);padding:4px 0;border-bottom:1px solid var(--bd)}
+.crow{padding:3px 0;border-bottom:1px solid var(--bd)}
+.crow input,.crow select{min-width:0;width:100%;padding:3px 3px;font-size:12.5px}
+.cgrp{background:var(--th);font-weight:600;padding:5px 8px;margin-top:8px;border-radius:4px}
+.cx{font-size:12px;color:var(--mu);padding-left:4px}
+.crow .del{padding:2px 6px}
+@media (max-width:1000px){.chead{display:none}.crow{grid-template-columns:repeat(auto-fill,minmax(105px,1fr))!important;padding:8px 0}.cc::before{content:attr(data-l);display:block;font-size:10.5px;color:var(--mu)}}
+
 td.n,th.n{text-align:right}
 .ok{color:var(--ok);font-weight:600}.wa{color:var(--wa);font-weight:600}.er{color:var(--er);font-weight:600}
 .msg{padding:6px 10px;border-left:4px solid;margin:4px 0;border-radius:4px;background:var(--bg);color:var(--tx)}
@@ -58,7 +67,7 @@ svg text{fill:var(--tx);font-family:system-ui,sans-serif}
 <body>
 <header>
   <div><h1>Dimensionatore Quadri BT — residenziale e FV ≤ 20 kW</h1>
-  <small>Sistema TT · CEI 64-8 · CEI-UNEL 35024/1 e 35023 · CEI 23-51 · CEI 0-21 · Catalogo tecnico Gewiss Energy 2026-27 · v1.3.3</small></div>
+  <small>Sistema TT · CEI 64-8 · CEI-UNEL 35024/1 e 35023 · CEI 23-51 · CEI 0-21 · Catalogo tecnico Gewiss Energy 2026-27 · v1.4</small></div>
   <div class="btns">
     <button class="sec" onclick="saveLS(true)">Salva</button>
     <button class="sec" onclick="exportJSON()">Esporta progetto</button>
@@ -373,6 +382,11 @@ function calcCore(minGen,drv){
   kids(q.id).forEach(k=>{const l=loadQ(k);['L1','L2','L3'].forEach(p=>{c[p]+=l.c[p];g[p]+=l.g[p]})});
   ['L1','L2','L3'].forEach(p=>c[p]*=q.kc);q._load={c,g};return q._load}
  loadQ(root);
+ // ---- Controlli di coerenza dei dati inseriti
+ S.circ.filter(c=>/generale|^gen\b|testa quadro/i.test(c.nome)).forEach(c=>add('wa',`Circuito "${c.nome}" in "${qName(c.q)}": sembra l'interruttore di testa inserito come carico. La testa di ogni quadro la mette il tool; come circuito aggiunge un apparecchio e un carico fittizi. Eliminarlo se non è un utilizzatore.`));
+ Qs.forEach(q=>{const nL=S.circ.filter(c=>c.q===q.id).length+S.inv.filter(v=>v.q===q.id).length+kids(q.id).length;if(nL<=1&&q.kc<1)add('wa',`${q.nome}: Kc ${q.kc} con un solo carico/linea — la contemporaneità vale solo tra più carichi: impostare Kc = 1.`)});
+ if(tri&&F.iccFN>F.icc)add('wa',`Icc fase-neutro (${F.iccFN} kA) maggiore della trifase (${F.icc} kA): dato non fisico, verificare (default prudenziale 6 kA).`);
+ if(root.selAmp==='no'&&false)0;
  const maxPh=o=>Math.max(o.L1,o.L2,o.L3);
  // ---- SPI
  const PacTot=S.inv.reduce((a,v)=>a+v.pac*v.n,0);R.PacTot=PacTot;
@@ -385,12 +399,15 @@ function calcCore(minGen,drv){
   if(tri&&S.inv.some(v=>v.fasi!=3)){const v=Object.values(phG);if(Math.max(...v)-Math.min(...v)>6)add('er','Squilibrio della generazione monofase > 6 kW (CEI 0-21, probabile).')}}
  add('in','Sistema TT: tutto ciò che sta a monte del primo differenziale (montante, quadro generale, linee di alimentazione dei sottoquadri senza differenziale) va realizzato in classe II: cavi con guaina in tubo isolante, centralini in classe II (CEI 64-8 sez. 413). I centralini Gewiss del tool sono in classe II.');
  const feedIb=k=>{const fq=byId[k.parent]._fasi,fk=k._fasi;return Math.max(fk==3?maxPh(k._load.c):(fq==3?k._load.c[k._fase]:k._load.c.L1),fk==3?maxPh(k._load.g):(fq==3?k._load.g[k._fase]:k._load.g.L1))};
+ // ---- Taglia del magnetotermico di testa (se scelto): > protezioni a valle e ≥ Ib del quadro
+ function headInOf(k){if(k.testa!=='mt')return null;const m=estMaxIn(k),base=STD_IN.find(x=>x>m)||63,po=k._fasi==3?'4P':'2P';
+  const d=DEV.filter(x=>x.ser==='MT 60'&&x.poles===po&&x.curve==='C').sort((a,b)=>a.In-b.In).find(x=>x.In>=base&&inEff('MT',x.In,F.tq)>=feedIb(k));return d?d.In:63}
  // ---- Stima della protezione più grande in un quadro (per la selettività amperometrica)
  function estMaxIn(q){let mx=0;
   S.circ.filter(c=>c.q===q.id).forEach(c=>{const T=TIPI[c.tipo]||TIPI.generico;let rcd=(c.fasi==3&&T.rcd3)?T.rcd3:T.rcd;if(c.tipo==='wallbox'&&c.rdc!=='si')rcd='A[EV]';if(c.idt&&c.idt!=='auto')rcd=c.idt;
    const s=pickProt({Ib:ibC(c),fasi:c.fasi,rcd,idn:30,curve:c.curva,T:F.tq,Icc:1,minIn:T.minIn,gen:null});if(s)mx=Math.max(mx,s.In)});
   S.inv.filter(v=>v.q===q.id).forEach(v=>{const s=pickProt({Ib:v.iac,fasi:v.fasi,rcd:v.rcd,idn:+v.idn,curve:v.curva,T:F.tq,Icc:1,minIn:6,maxIn:v.ocpd,gen:null});if(s)mx=Math.max(mx,s.In)});
-  kids(q.id).forEach(k=>{const m=estMaxIn(k);const n=k.feeder.selAmp!=='no'?(STD_IN.find(x=>x>m)||63):6;
+  kids(q.id).forEach(k=>{const m=headInOf(k)||estMaxIn(k);const n=k.feeder.selAmp!=='no'?(STD_IN.find(x=>x>m)||63):6;
    const fs=pickProt({Ib:feedIb(k),fasi:k._fasi,rcd:k.feeder.rcd==='S'?'A[S]':'none',idn:300,curve:k.feeder.curva,T:F.tq,Icc:1,minIn:n,gen:null});mx=Math.max(mx,fs?fs.In:n)});
   return mx}
  // ---- Elaborazione dei quadri (dall'alto)
@@ -419,8 +436,10 @@ function calcCore(minGen,drv){
      else add('er',`Nessun IDP A[S] ${F.genIdn} mA ≥ ${head.In} A.`)}}
   }else{
    const fIn=feedLine&&!feedLine.err?feedLine.In:0;
-   if(q.testa==='mt'){head=DEV.filter(d=>d.ser==='MT 60'&&d.poles===po&&d.curve==='C').sort((a,b)=>a.In-b.In).find(d=>d.In>=fIn);
-    if(head){Rq.head={dev:head,In:head.In,sez:false};Rq.bom.push({code:head.code,d:'Interruttore di testa — '+descDev(head),q:1,mods:head.mods,p:pdissDev(head,feedLine?.Ib||0),pg:'74-77'});Rq.trace.push(`Testa quadro: ${head.code} ${descDev(head)} (In ≥ linea ${fIn} A; nessuna selettività con la linea a monte di pari taglia)`)}}
+   if(q.testa==='mt'){const hIn=headInOf(q),mDn=estMaxIn(q);head=DEV.filter(d=>d.ser==='MT 60'&&d.poles===po&&d.curve==='C').find(d=>d.In===hIn);
+    if(head){Rq.head={dev:head,In:head.In,sez:false};Rq.bom.push({code:head.code,d:'Interruttore di testa — '+descDev(head),q:1,mods:head.mods,p:pdissDev(head,feedLine?.Ib||0),pg:'74-77'});
+     const okUp=!fIn||head.In<fIn;Rq.trace.push(`Testa quadro: ${head.code} ${descDev(head)} — In ${head.In} A > protezioni a valle (${mDn} A) ✓; ${fIn?`< linea a monte ${fIn} A ${okUp?'✓':'✗'}`:''}; In a ${F.tq} °C ${f(inEff('MT',head.In,F.tq),1)} A ≥ Ib quadro ${f(feedLine?.Ib||0,1)} A`);
+     if(!okUp)add('wa',`${q.nome}: magnetotermico di testa ${head.In} A non inferiore alla linea a monte (${fIn} A): nessuna selettività tra i due. Attivare la selettività sulla linea o usare il sezionatore.`)}}
    else{const sz=[32,40,63].find(x=>x>=fIn);const pp=fq==3?4:2;
     if(sz){const code=SD[pp][sz];Rq.head={code,In:sz,sez:true};Rq.bom.push({code,d:`Interruttore di manovra-sezionatore ${pp}P ${sz} A (testa quadro)`,q:1,mods:pp,p:SDP[sz]*pp*Math.pow(Math.min(feedLine?.Ib||0,sz)/sz,2),pg:'198, 210'});
      Rq.trace.push(`Testa quadro: sezionatore ${code} ${pp}P ${sz} A ≥ In linea ${fIn} A (protetto dalla linea a monte; Icw 12·In)`)}
@@ -451,7 +470,7 @@ function calcCore(minGen,drv){
    const fd=k.feeder,fk=k._fasi;
    const Ib=feedIb(k);
    const rcd=fd.rcd==='S'?'A[S]':'none';
-   const mxDn=estMaxIn(k),minF=fd.selAmp!=='no'?(STD_IN.find(x=>x>mxDn)||63):6;
+   const mxDn=headInOf(k)||estMaxIn(k),minF=fd.selAmp!=='no'?(STD_IN.find(x=>x>mxDn)||63):6;
    const r=sizeLine({nome:'Linea → '+k.nome,Ib,ibTxt:`Σ correnti del quadro "${k.nome}" sulla fase più carica × Kc ${k.kc} = ${f(Ib,2)} A (o immissione FV se maggiore)`,fasi:fk,L:fd.L,posa:fd.posa,iso:fd.iso,grup:fd.grup,tAmb:fd.tAmb,curva:fd.curva,dvMax:fd.dv,dvUp:0,minIn:minF,minS:2.5,cos:0.95,rcd,idn:300},sup,F,buDev);
    if(fd.selAmp!=='no'&&!r.err)r.trace.splice(2,0,`Selettività sul sovraccarico: In linea > protezione più grande a valle (${mxDn} A) → In ≥ ${minF} A`);
    if(q===root&&Rq.head&&!r.err&&r.In>=Rq.head.In)add('wa',`Linea → ${k.nome}: In ${r.In} A ≥ generale ${Rq.head.In} A — sul sovraccarico interviene prima il generale.`);
@@ -604,27 +623,28 @@ function addQ(fz){const n=S.quadri.length;let id='Q'+(n+1);while(S.quadri.some(q
  S.quadri.push({id,nome:'Nuovo quadro '+(fz==3?'trifase':'monofase'),parent:S.quadri[0].id,fasi:S.forn.fasi==3?fz:1,fase:'auto',pos:'parete',porta:'fume',size:'auto',ris:20,spd:'no',testa:'sez',kc:1,feeder:Object.assign({},FEED0)});renderQd();renderCirc();renderPV();recalc()}
 function delQ(i){const q=S.quadri[i];if(!confirm(`Rimuovere "${q.nome}"? Circuiti e sottoquadri passano a "${qName(q.parent)}".`))return;
  S.circ.forEach(c=>{if(c.q===q.id)c.q=q.parent});S.inv.forEach(v=>{if(v.q===q.id)v.q=q.parent});S.quadri.forEach(x=>{if(x.parent===q.id)x.parent=q.parent});S.quadri.splice(i,1);renderQd();renderCirc();renderPV();recalc()}
+const CCOLS=[['Quadro','q',1.5],['Nome','nome',1.7],['Tipo','tipo',1.7],['P kW','P',.55],['cosφ','cos',.55],['Ku','ku',.5],['Fasi','fasi',.6],['Fase','fase',.7],['L m','L',.55],['Posa','posa',.6],['Isolante','iso',1],['Raggr.','grup',.5],['T amb','tAmb',.55],['Curva','curva',.55],['ΔV % tot','dv',.55],['Tipo Id','idt',.85],['RDC-DD','rdc',.6],['','del',.35]];
 function renderCirc(){
+ const gt=CCOLS.map(c=>`minmax(0,${c[2]}fr)`).join(' ');
  const ord=S.circ.map((c,i)=>i).sort((a,b)=>S.quadri.findIndex(q=>q.id===S.circ[a].q)-S.quadri.findIndex(q=>q.id===S.circ[b].q));
- let lastQ=null;const rows=ord.map(i=>{const c=S.circ[i];const gh=c.q!==lastQ?`<tr class="grp"><td colspan="18">${esc(qName(c.q))}</td></tr>`:'';lastQ=c.q;return gh+row(i)}).join('');
- function row(i){const c=S.circ[i],p=`circ.${i}.`,qq=S.quadri.find(q=>q.id===c.q),mono=S.forn.fasi!=3||(qq&&qq.parent&&qq.fasi==1);return`<tr>
- <td>${inp(p+'q',{bare:1,sel:qSel()})}</td>
- <td>${inp(p+'nome',{txt:1,bare:1})}</td><td>${inp(p+'tipo',{bare:1,sel:Object.entries(TIPI).map(([k,v])=>[k,v.l])})}</td>
- <td>${inp(p+'P',{bare:1})}</td><td>${inp(p+'cos',{bare:1})}</td><td>${inp(p+'ku',{bare:1})}</td>
- <td>${mono?'1F':inp(p+'fasi',{bare:1,n:1,sel:[[1,'1F'],[3,'3F']]})}</td>
- <td>${!mono&&c.fasi!=3?inp(p+'fase',{bare:1,sel:['auto','L1','L2','L3']}):'—'}</td>
- <td>${inp(p+'L',{bare:1})}</td><td>${inp(p+'posa',{bare:1,sel:Object.keys(POSE)})}</td><td>${inp(p+'iso',{bare:1,sel:SEL_ISO})}</td>
- <td>${inp(p+'grup',{bare:1})}</td><td>${inp(p+'tAmb',{bare:1})}</td><td>${inp(p+'curva',{bare:1,sel:['B','C','D']})}</td><td>${inp(p+'dv',{bare:1})}</td>
- <td>${inp(p+'idt',{bare:1,sel:[['auto','Auto'],'A','A[IR]','F','B','A[EV]']})}</td>
- <td>${c.tipo==='wallbox'?inp(p+'rdc',{bare:1,sel:SEL_SN}):'—'}</td>
- <td><button class="del" onclick="S.circ.splice(${i},1);renderCirc();recalc()">✕</button></td></tr>`}
- $('#t-circ').innerHTML=`<div class="card"><h2>Circuiti utilizzatori</h2><div class="tw"><table>
- <tr><th>Quadro</th><th>Nome</th><th>Tipo</th><th>P (kW)</th><th>cosφ</th><th>Ku</th><th>Fasi</th><th>Fase</th><th>L (m)</th><th>Posa</th><th>Isolante</th><th>Raggr.</th><th>T amb</th><th>Curva</th><th>ΔV % tot.</th><th>Tipo Id</th><th>RDC-DD</th><th></th></tr>
- ${rows}</table></div><div class="grid" style="align-items:end"><label>Nel quadro<select id="cq">${qSel().map(([v,n])=>`<option value="${v}">${esc(n)}</option>`).join('')}</select></label>
+ let lastQ=null;
+ const cell=(l,html)=>`<div class="cc" data-l="${l}">${html}</div>`;
+ const rows=ord.map(i=>{const c=S.circ[i],p=`circ.${i}.`,qq=S.quadri.find(q=>q.id===c.q),mono=S.forn.fasi!=3||(qq&&qq.parent&&qq.fasi==1);
+  const gh=c.q!==lastQ?`<div class="cgrp">${esc(qName(c.q))}</div>`:'';lastQ=c.q;
+  const v={q:inp(p+'q',{bare:1,sel:qSel()}),nome:inp(p+'nome',{txt:1,bare:1}),tipo:inp(p+'tipo',{bare:1,sel:Object.entries(TIPI).map(([k,x])=>[k,x.l])}),
+   P:inp(p+'P',{bare:1}),cos:inp(p+'cos',{bare:1}),ku:inp(p+'ku',{bare:1}),fasi:mono?'<span class="cx">1F</span>':inp(p+'fasi',{bare:1,n:1,sel:[[1,'1F'],[3,'3F']]}),
+   fase:!mono&&c.fasi!=3?inp(p+'fase',{bare:1,sel:['auto','L1','L2','L3']}):'<span class="cx">—</span>',L:inp(p+'L',{bare:1}),posa:inp(p+'posa',{bare:1,sel:Object.keys(POSE)}),
+   iso:inp(p+'iso',{bare:1,sel:SEL_ISO}),grup:inp(p+'grup',{bare:1}),tAmb:inp(p+'tAmb',{bare:1}),curva:inp(p+'curva',{bare:1,sel:['B','C','D']}),dv:inp(p+'dv',{bare:1}),
+   idt:inp(p+'idt',{bare:1,sel:[['auto','Auto'],'A','A[IR]','F','B','A[EV]']}),rdc:c.tipo==='wallbox'?inp(p+'rdc',{bare:1,sel:SEL_SN}):'<span class="cx">—</span>',
+   del:`<button class="del" title="Elimina" onclick="S.circ.splice(${i},1);renderCirc();recalc()">✕</button>`};
+  return gh+`<div class="crow" style="grid-template-columns:${gt}">${CCOLS.map(c=>cell(c[0],v[c[1]])).join('')}</div>`}).join('');
+ $('#t-circ').innerHTML=`<div class="card"><h2>Circuiti utilizzatori</h2>
+ <div class="chead" style="grid-template-columns:${gt}">${CCOLS.map(c=>`<div>${c[0]}</div>`).join('')}</div>${rows}
+ <div class="grid" style="align-items:end;margin-top:10px"><label>Nel quadro<select id="cq">${qSel().map(([v,n])=>`<option value="${v}">${esc(n)}</option>`).join('')}</select></label>
  <label>Tipo<select id="ct">${Object.entries(TIPI).map(([k,v])=>`<option value="${k}">${v.l}</option>`).join('')}</select></label>
  <div><button onclick="const tp=$('#ct').value;S.circ.push(cir($('#cq').value,TIPI[tp].l,tp,1));renderCirc();recalc()">+ Aggiungi circuito</button></div></div>
  ${S.circ.length?'':'<p class="disc">Nessun circuito: aggiungine uno o parti da un modello (menu "Nuovo progetto…").</p>'}
- <p class="disc">ΔV % tot. = limite dalla consegna al carico (comprende le linee dei sottoquadri). Nei quadri monofase i circuiti prendono la fase del quadro. Tipo Id "Auto" = scelta per tipo di carico; impostarlo a mano se il costruttore dichiara diversamente.</p></div>`;}
+ <p class="disc">Solo utilizzatori: la testa di ogni quadro (generale, sezionatore o magnetotermico) la mette il tool. ΔV % tot. = limite dalla consegna al carico. Nei quadri monofase i circuiti prendono la fase del quadro. Tipo Id "Auto" = scelta per tipo di carico.</p></div>`;}
 function renderPV(){const M='mod.';
  const invs=S.inv.map((v,i)=>{const p=`inv.${i}.`,qq=S.quadri.find(q=>q.id===v.q),mono=S.forn.fasi!=3||(qq&&qq.parent&&qq.fasi==1);
  return`<div class="inv"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b>${esc(v.nome)}</b>
