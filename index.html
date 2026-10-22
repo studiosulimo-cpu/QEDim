@@ -62,19 +62,33 @@ svg text{fill:var(--tx);font-family:system-ui,sans-serif}
 .disc{font-size:12px;color:var(--mu)}
 @media (max-width:600px){main{padding:10px}.grid{grid-template-columns:1fr 1fr}}
 @media print{header .btns,nav,.noprint{display:none!important}.tab{display:block!important}body{background:#fff;color:#000}.card{break-inside:avoid;border-color:#999}}
+#print{display:none}
+body.printing>header,body.printing>nav,body.printing>main{display:none!important}
+body.printing{background:#fff!important}
+body.printing #print{display:block}
+#print{--bg:#fff;--card:#fff;--tx:#000;--mu:#444;--bd:#999;--ac:#0b3d91;--ok:#16602b;--wa:#8a5600;--er:#a01818;--in:#2b4a70;--th:#eee;color:#000;background:#fff;font:10.5pt/1.35 system-ui,Segoe UI,Roboto,sans-serif;padding:0}
+#print h1{font-size:18pt;margin:0 0 4mm}#print h2{font-size:13pt;margin:6mm 0 2mm;border-bottom:1.5px solid #000;padding-bottom:1mm}#print h3{font-size:11pt;margin:4mm 0 1.5mm}
+#print table{border-collapse:collapse;width:100%;font-size:8.5pt;margin:1mm 0 3mm}#print th,#print td{border:1px solid #888;padding:1.2mm 1.5mm;vertical-align:top}#print th{background:#eee;text-align:left}
+#print .n{text-align:right}#print pre{white-space:pre-wrap;font:7.8pt/1.35 ui-monospace,Consolas,monospace;border:1px solid #bbb;padding:2mm;margin:1mm 0;background:#fafafa}
+#print .pb{break-before:page}#print .nb{break-inside:avoid}#print svg{max-width:100%;height:auto}
+#print .arch svg{max-height:72mm;width:auto;display:block;margin:0 auto}#print .cover{border:2px solid #000;padding:8mm;margin-bottom:6mm}#print .muted{color:#444;font-size:9pt}
+#print .t1 table{font-size:7.8pt}#print .t1 td,#print .t1 th{padding:.8mm 1.2mm}#print .cart{width:100%;border:2px solid #000;margin-top:3mm}#print .cart td{font-size:8.5pt}#print .cart b{font-size:10pt}
+#print .sig{height:16mm}#print .box{border:1px solid #000;padding:3mm;margin:2mm 0}
+#print .msg{border-left:3px solid #888;padding:1mm 2mm;margin:1mm 0;font-size:8.8pt;background:#fff}#print .msg.er{border-color:#a01818}#print .msg.wa{border-color:#8a5600}
+
 </style>
 </head>
 <body>
 <header>
   <div><h1>Dimensionatore Quadri BT — residenziale e FV ≤ 20 kW</h1>
-  <small>Sistema TT · CEI 64-8 · CEI-UNEL 35024/1 e 35023 · CEI 23-51 · CEI 0-21 · Catalogo tecnico Gewiss Energy 2026-27 · v1.4</small></div>
+  <small>Sistema TT · CEI 64-8 · CEI-UNEL 35024/1 e 35023 · CEI 23-51 · CEI 0-21 · Catalogo tecnico Gewiss Energy 2026-27 · v1.5</small></div>
   <div class="btns">
     <button class="sec" onclick="saveLS(true)">Salva</button>
     <button class="sec" onclick="exportJSON()">Esporta progetto</button>
     <button class="sec" onclick="document.getElementById('fimp').click()">Importa progetto</button>
     <input type="file" id="fimp" accept=".json" hidden onchange="importJSON(event)">
     <select id="tplsel" style="width:auto" onchange="newFromTpl(this.value);this.value=''"><option value="">Nuovo progetto…</option><option value="vuoto">Vuoto — solo quadro generale</option><option value="mono">Modello: monofase con FV</option><option value="tri">Modello: trifase con FV e wallbox</option><option value="villa">Modello: trifase con generale e 4 sottoquadri</option></select>
-    <button onclick="window.print()">Stampa relazione</button>
+    <select id="prsel" style="width:auto" onchange="doPrint(this.value);this.value=''"><option value="">Stampa…</option><option value="rel">1 · Relazione tecnica completa</option><option value="sch">2 · Schemi elettrici (progetto)</option><option value="cert">3 · Fascicolo di certificazione quadri</option></select>
   </div>
 </header>
 <nav id="nav"></nav>
@@ -87,6 +101,7 @@ svg text{fill:var(--tx);font-family:system-ui,sans-serif}
 <section class="tab" id="t-quadro"></section>
 <section class="tab noprint" id="t-db"></section>
 </main>
+<div id="print"></div>
 <script>
 /* ===================== DATABASE GEWISS (Catalogo tecnico Energy 2026-27) ===================== */
 // [codice, serie, curva, tipo diff, poli, In, IΔn mA, moduli, pagina catalogo]
@@ -235,7 +250,7 @@ const FEED0={L:10,posa:'B1',iso:'PVC',grup:1,tAmb:30,dv:1.5,curva:'C',rcd:'none'
 const C0={cos:0.9,ku:1,fasi:1,fase:'auto',L:12,posa:'B1',iso:'PVC',grup:2,tAmb:30,curva:'C',dv:4,rdc:'si',idt:'auto'};
 const cir=(q,nome,tipo,P,o={})=>Object.assign({},C0,{q,nome,tipo,P,cos:TIPI[tipo].cos},o);
 function defaults(){return{
- forn:{cliente:'',commessa:'',fasi:3,P:6,icc:10,iccFN:6,ra:50,montL:5,montS:10,montIso:'PVC',montPosa:'B1',tq:35,genDiff:'no',genIdn:300,spiP:3},
+ forn:{cliente:'',commessa:'',indirizzo:'',assemblatore:'',assInd:'',progettista:'',redatto:'',rev:'0',dataDoc:'',fasi:3,P:6,icc:10,iccFN:6,ra:50,montL:5,montS:10,montIso:'PVC',montPosa:'B1',tq:35,genDiff:'no',genIdn:300,spiP:3},
  quadri:[{id:'QG',nome:'Quadro generale',parent:'',fasi:3,fase:'auto',pos:'parete',porta:'fume',size:'auto',ris:20,spd:'si',testa:'mt',kc:1,feeder:null}],
  circ:[],inv:[],
  mod:{voc:49.5,isc:13.9,beta:-0.25,irev:25,vsys:1500},tmin:-20};}
@@ -457,12 +472,12 @@ function calcCore(minGen,drv){
    const r=sizeLine({nome:c.nome,Ib,ibTxt,fasi:c.fasi,L:c.L,posa:c.posa,iso:c.iso,grup:c.grup,tAmb:c.tAmb,curva:c.curva,dvMax:c.dv-dvUp,dvUp,minIn:T.minIn,minS:c.minS||T.minS,cos:c.cos,rcd,idn:30},sup,F,buDev);
    r.trace.push(`Differenziale tipo ${rcd} 30 mA — Ra·IΔn = ${f(F.ra*0.03,2)} V ≤ 50 V ✓`);if(T.note)r.trace.push('Nota: '+T.note);
    if(c.tipo==='wallbox'){if(c.P>7.4&&c.fasi==1)r.msgs.push(['wa',`${c.nome}: oltre 7,4 kW monofase: valutare wallbox trifase.`]);if(c.P>=F.P*0.7)add('wa',`${c.nome}: ${c.P} kW su contratto da ${F.P} kW → gestione dinamica della potenza (DPM) indispensabile, altrimenti il limitatore interviene.`)}
-   Rq.lines.push({kind:'U',nome:c.nome,tipo:T.l,fase:c._fase,fasi:c.fasi,Ib,rcd,idn:30,curva:c.curva,...r});r.msgs.forEach(x=>R.msgs.push(x))});
+   Rq.lines.push({kind:'U',Lx:c.L,posaX:c.posa,nome:c.nome,tipo:T.l,fase:c._fase,fasi:c.fasi,Ib,rcd,idn:30,curva:c.curva,...r});r.msgs.forEach(x=>R.msgs.push(x))});
   // inverter
   S.inv.filter(v=>v.q===q.id).forEach(v=>{
    const r=sizeLine({nome:v.nome,Ib:v.iac,ibTxt:`Iac max da datasheet = ${f(v.iac,1)} A`,fasi:v.fasi,L:v.L,posa:v.posa,iso:v.iso,grup:v.grup,tAmb:v.tAmb,curva:v.curva,dvMax:v.dv,dvUp:0,minIn:6,maxIn:v.ocpd,minS:2.5,cos:1,rcd:v.rcd,idn:+v.idn},sup,F,buDev);
    r.trace.push(`Differenziale tipo ${v.rcd} ${v.idn} mA — Ra·IΔn = ${f(F.ra*v.idn/1000,2)} V`);
-   for(let k=0;k<v.n;k++)Rq.lines.push({kind:'G',nome:v.n>1?`${v.nome} (${k+1}/${v.n})`:v.nome,tipo:'Inverter FV',fase:v._fase,fasi:v.fasi,Ib:v.iac,rcd:v.rcd,idn:+v.idn,curva:v.curva,...r});
+   for(let k=0;k<v.n;k++)Rq.lines.push({kind:'G',Lx:v.L,posaX:v.posa,nome:v.n>1?`${v.nome} (${k+1}/${v.n})`:v.nome,tipo:'Inverter FV',fase:v._fase,fasi:v.fasi,Ib:v.iac,rcd:v.rcd,idn:+v.idn,curva:v.curva,...r});
    r.msgs.forEach(x=>R.msgs.push(x));dcOf(v)});
   // linee verso i sottoquadri
   const children=kids(q.id);
@@ -476,7 +491,7 @@ function calcCore(minGen,drv){
    if(q===root&&Rq.head&&!r.err&&r.In>=Rq.head.In)add('wa',`Linea → ${k.nome}: In ${r.In} A ≥ generale ${Rq.head.In} A — sul sovraccarico interviene prima il generale.`);
    if(rcd==='none')r.trace.push('Linea senza differenziale: protezione contro i contatti indiretti per doppio isolamento (classe II) fino al quadro di arrivo.');
    else r.trace.push(`Differenziale selettivo A[S] 300 mA sulla linea.`);
-   const line={kind:'F',nome:'Linea → '+k.nome,child:k.id,tipo:'Alimentazione sottoquadro',fase:fk==3?'L1-L2-L3':k._fase,fasi:fk,Ib,rcd:rcd==='none'?'—':'A[S]',idn:rcd==='none'?0:300,curva:fd.curva,...r};
+   const line={kind:'F',Lx:fd.L,posaX:fd.posa,nome:'Linea → '+k.nome,child:k.id,tipo:'Alimentazione sottoquadro',fase:fk==3?'L1-L2-L3':k._fase,fasi:fk,Ib,rcd:rcd==='none'?'—':'A[S]',idn:rcd==='none'?0:300,curva:fd.curva,...r};
    Rq.lines.push(line);r.msgs.forEach(x=>R.msgs.push(x));
    if(rcd==='none')add('in',`Linea → ${k.nome}: senza differenziale (scelta consigliata in TT con differenziali nel sottoquadro). Posare in classe II: cavo con guaina (es. FG16OR16 / FG16OM16) in tubo isolante, centralino di arrivo in classe II.`);
    else{const dn=S.circ.filter(c=>subtree(k).some(x=>x.id===c.q));if(dn.some(c=>{const T=TIPI[c.tipo];return c.idt==='B'||c.idt==='A[EV]'||(c.fasi==3&&T.rcd3==='B'&&c.idt==='auto')||(c.tipo==='wallbox'&&c.rdc!=='si')}))add('wa',`Linea → ${k.nome}: differenziale A[S] a monte di differenziali tipo B/A[EV]: rischio di accecamento da corrente continua. Preferire la linea senza differenziale in classe II.`)}
@@ -588,7 +603,11 @@ function renderForn(){const F='forn.';
  <div class="card"><h2>Quadro generale — protezioni</h2><div class="grid">
  ${inp(F+'genDiff',{l:'Generale',sel:[['no','Magnetotermico (differenziali a valle) — consigliato in TT'],['S','Magnetotermico + differenziale selettivo A[S]']]})}
  ${S.forn.genDiff==='S'?inp(F+'genIdn',{l:'IΔn differenziale generale (mA)',n:1,sel:[300,500]}):''}
- ${inp(F+'spiP',{l:'Potenza dissipata SPI esterno (W)',h:'Solo se serve SPI esterno'})}</div></div>`;}
+ ${inp(F+'spiP',{l:'Potenza dissipata SPI esterno (W)',h:'Solo se serve SPI esterno'})}</div></div>
+ <div class="card"><h2>Dati per le stampe</h2><div class="grid">
+ ${inp(F+'indirizzo',{l:'Indirizzo impianto',txt:1})}${inp(F+'assemblatore',{l:'Costruttore dei quadri (ragione sociale)',txt:1})}
+ ${inp(F+'assInd',{l:'Sede costruttore quadri',txt:1})}${inp(F+'progettista',{l:'Progettista impianto',txt:1})}
+ ${inp(F+'redatto',{l:'Redatto da',txt:1})}${inp(F+'rev',{l:'Revisione',txt:1})}${inp(F+'dataDoc',{l:'Data documento',txt:1,h:'Vuoto = data odierna'})}</div></div>`;}
 function renderQd(){
  const SZ=[['auto','Auto'],[12,'12'],[24,'24'],[36,'36'],[54,'54'],[72,'72']];
  const rows=S.quadri.map((q,i)=>{const p=`quadri.${i}.`,isRoot=!q.parent,fd=q.feeder;
@@ -756,6 +775,88 @@ function renderQuadro(R){
  ${R.spiExt?'<tr><td>Funzionalità SPI/DDI con cassetta prova relè</td><td></td></tr>':''}
  <tr><td>Documentazione: schema, distinta, targa, dichiarazione di conformità, istruzioni</td><td></td></tr></table></div>`;}
 
+/* ===================== STAMPE ===================== */
+const today=()=>S.forn.dataDoc||new Date().toLocaleDateString('it-IT');
+const dash=v=>v?esc(v):'<span class="muted">______________________</span>';
+function coverHTML(tit,sub){const F=S.forn;return`<div class="cover"><h1>${tit}</h1><div class="muted">${sub}</div>
+ <table><tr><th style="width:28%">Committente / impianto</th><td>${dash(F.cliente)}</td></tr><tr><th>Indirizzo</th><td>${dash(F.indirizzo)}</td></tr>
+ <tr><th>Commessa</th><td>${dash(F.commessa)}</td></tr><tr><th>Fornitura</th><td>${F.fasi==3?'Trifase 400/230 V':'Monofase 230 V'} · ${F.P} kW · sistema TT · Icc ${F.icc} kA${F.fasi==3?' (F-N '+F.iccFN+' kA)':''} · Ra ${F.ra} Ω</td></tr>
+ <tr><th>Costruttore dei quadri</th><td>${dash(F.assemblatore)} ${F.assInd?'— '+esc(F.assInd):''}</td></tr><tr><th>Progettista</th><td>${dash(F.progettista)}</td></tr>
+ <tr><th>Redatto da / revisione / data</th><td>${dash(F.redatto)} · rev. ${esc(F.rev||'0')} · ${today()}</td></tr></table>
+ <div class="muted">Calcoli: CEI 64-8, CEI-UNEL 35024/1 e 35023, CEI 23-51, CEI 0-21. Componenti: Catalogo tecnico Gewiss Energy 2026-27 e schede prodotto. Strumento: Dimensionatore Quadri BT v1.5.</div></div>`}
+function cartiglio(tav,tot,tit){const F=S.forn;return`<table class="cart"><tr><td rowspan="2" style="width:40%"><b>${esc(tit)}</b><br>${esc(F.cliente||'')} ${F.indirizzo?'— '+esc(F.indirizzo):''}</td>
+ <td>Commessa<br><b>${esc(F.commessa||'—')}</b></td><td>Tavola<br><b>${tav} / ${tot}</b></td><td>Rev.<br><b>${esc(F.rev||'0')}</b></td></tr>
+ <tr><td>Data<br>${today()}</td><td>Redatto<br>${esc(F.redatto||'—')}</td><td>Progettista<br>${esc(F.progettista||'—')}</td></tr></table>`}
+function legendTable(Rq){return`<table><tr><th>Circuito / linea</th><th>Fase</th><th class="n">Ib A</th><th>Protezione</th><th>Codici Gewiss</th><th>Differenziale</th><th>Cavo</th><th class="n">L m</th><th class="n">ΔV % tot</th></tr>
+ ${Rq.lines.filter(l=>!l.err).map(l=>`<tr><td>${esc(l.nome)}</td><td>${l.fase}</td><td class="n">${f(l.Ib,1)}</td><td>${l.sol.prot.poles} ${l.curva}${l.In} — ${l.sol.icOk?l.sol.icn:l.sol.bu+' BU'} kA</td><td>${l.sol.items.map(d=>d.code).join(' + ')}</td><td>${l.idn?l.rcd+' '+l.idn+' mA':'— (classe II)'}</td><td>${l.fasi==3?'5G':'3G'}${l.S} mm² ${l.posaX||''}</td><td class="n">${l.Lx??''}</td><td class="n">${f(l.dv+(l.kind==='F'?0:Rq.dvUp),2)}</td></tr>`).join('')}</table>`}
+function bomTable(Rq){const q=Rq.q,enc=Rq.enc;return`<table><tr><th>Codice</th><th>Componente</th><th class="n">Q.tà</th><th class="n">Moduli</th><th class="n">Pdiss W</th><th class="n">Pag. cat.</th></tr>
+ ${enc?`<tr><td>${enc.c[q.porta]}</td><td>Centralino ${esc(Rq.E.nome)} ${enc.mod} moduli, classe II — potenza dissipabile ${enc.p} W</td><td class="n">1</td><td class="n">—</td><td class="n">—</td><td class="n">scheda</td></tr>`:''}
+ ${Rq.bom.map(b=>`<tr><td>${esc(b.code)}</td><td>${esc(b.d)}</td><td class="n">${b.q}</td><td class="n">${f(b.mods*b.q,1)}</td><td class="n">${f(b.p*b.q,2)}</td><td class="n">${esc(b.pg||'')}</td></tr>`).join('')}
+ <tr><th></th><th>Totale</th><th></th><th class="n">${f(Rq.mods,1)}</th><th class="n">${f(Rq.Pdp+Rq.Pau,2)}</th><th></th></tr></table>`}
+function thermTable(Rq){const q=Rq.q,enc=Rq.enc;return`<table><tr><th>Grandezza</th><th class="n">Valore</th><th>Esito</th></tr>
+ <tr><td>Moduli occupati / con riserva ${q.ris}%</td><td class="n">${f(Rq.mods,1)} / ${f(Rq.mods*Rq.kr,1)}</td><td>${enc?(Rq.okMod?'≤ '+enc.mod+' ✓':'> '+enc.mod+' ✗'):'—'}</td></tr>
+ <tr><td>Pdp — potenza dissipata apparecchi alla corrente di impiego</td><td class="n">${f(Rq.Pdp,2)} W</td><td></td></tr>
+ <tr><td>0,2·Pdp — connessioni e conduttori</td><td class="n">${f(0.2*Rq.Pdp,2)} W</td><td></td></tr>
+ <tr><td>Pau — ausiliari</td><td class="n">${f(Rq.Pau,2)} W</td><td></td></tr>
+ <tr><th>Ptot = Pdp + 0,2·Pdp + Pau</th><th class="n">${f(Rq.Ptot,2)} W</th><th>${enc?(Rq.okP?'≤ Pinv '+enc.p+' W ✓':'> Pinv '+enc.p+' W ✗'):'—'}</th></tr></table>`}
+function targaTable(Rq){const q=Rq.q,F=S.forn;return`<table><tr><th style="width:42%">Costruttore del quadro</th><td>${dash(F.assemblatore)}</td></tr><tr><th>Identificazione quadro</th><td>${esc(q.nome)}${F.commessa?' · '+esc(F.commessa):''}</td></tr>
+ <tr><th>Norma</th><td>CEI 23-51 (quadri per uso domestico e similare)</td></tr><tr><th>Tensione nominale / frequenza</th><td>${q._fasi==3?'400/230 V 3F+N':'230 V F+N'} · 50 Hz</td></tr>
+ <tr><th>Corrente nominale del quadro (In)</th><td>${Rq.head?.In??'—'} A</td></tr><tr><th>Corrente di cortocircuito presunta nel punto di installazione</th><td>${f(Rq.sup.IccQ,2)} kA</td></tr>
+ <tr><th>Grado di protezione / classe di isolamento</th><td>${Rq.E.ip} · classe II</td></tr><tr><th>Sistema di distribuzione</th><td>TT</td></tr></table>`}
+const archBlock=R=>`<div class="nb arch">${svgArch(R)}</div>`;
+function buildRel(R){const F=S.forn;const ord={er:0,wa:1,in:2};const msgs=R.msgs.filter((m,i,a)=>a.findIndex(x=>x[1]===m[1])===i).sort((a,b)=>ord[a[0]]-ord[b[0]]);
+ let s=coverHTML('Relazione tecnica di dimensionamento','Quadri elettrici BT — calcoli, scelte dei componenti, distinte e verifiche');
+ s+=`<h2>1. Esito e segnalazioni</h2>${msgs.map(m=>`<div class="msg ${m[0]}">${m[0]==='er'?'✗ ':m[0]==='wa'?'⚠ ':'ℹ '}${esc(m[1])}</div>`).join('')}`;
+ s+=`<h2>2. Architettura dell'impianto</h2>${archBlock(R)}<p class="muted">Montante: ${F.montL} m, ${F.montS} mm², ${F.montIso}, posa ${F.montPosa}. Temperatura interna quadri: ${F.tq} °C.</p>`;
+ R.order.forEach((id,n)=>{const Rq=R.Q[id],q=Rq.q;
+  s+=`<div class="pb"></div><h2>${3+n}. ${esc(q.nome)}</h2><p>${q._fasi==3?'Trifase':'Monofase '+(q._fase||'')} · ${q.parent?'alimentato da '+esc(qName(q.parent)):'quadro generale'} · Icc ${Rq.sup.Icc3Q?f(Rq.sup.Icc3Q,2)+' kA 3F, ':''}${f(Rq.sup.IccFNQ,2)} kA F-N · ΔV a monte ${f(Rq.dvUp,2)} % · Kc ${q.kc}</p>
+  <h3>Schema unifilare</h3><div class="nb">${svgUnifilare(Rq)}</div>
+  <h3>Dispositivo di testa e cortocircuito</h3><pre>${esc(Rq.trace.join('\n'))}</pre>
+  <h3>Circuiti e linee</h3>${legendTable(Rq)}
+  <h3>Calcoli per circuito</h3>${Rq.lines.map(l=>`<div class="nb"><b>${esc(l.nome)}</b><pre>${esc(l.trace.join('\n'))}</pre></div>`).join('')}
+  <h3>Distinta componenti</h3>${bomTable(Rq)}<h3>Verifica di sovratemperatura (CEI 23-51)</h3>${thermTable(Rq)}<h3>Dati di targa</h3>${targaTable(Rq)}`});
+ if(R.dc.length)s+=`<div class="pb"></div><h2>Lato corrente continua</h2>${R.dc.map(d=>`<div class="nb"><b>${esc(d.inv)} — MPPT ${d.mppt} (${d.ns}×${d.np})</b><pre>${esc(d.trace.join('\n'))}</pre></div>`).join('')}${R.box.length?`<h3>String box</h3><table><tr><th>Codice</th><th>Componente</th><th class="n">Q.tà</th></tr>${R.box.map(b=>`<tr><td>${b.code}</td><td>${esc(b.d)}</td><td class="n">${b.q}</td></tr>`).join('')}</table>`:''}`;
+ s+=`<div class="pb"></div><h2>Criteri di calcolo e limiti</h2><table><tr><th>Verifica</th><th>Riferimento</th></tr>
+ <tr><td>Ib ≤ In(T) ≤ Iz con declassamento da catalogo; If ≤ 1,45·Iz</td><td>CEI 64-8 sez. 433; CEI-UNEL 35024/1</td></tr><tr><td>K²S² ≥ I²t (curve di energia passante Gewiss)</td><td>CEI 64-8 sez. 434</td></tr>
+ <tr><td>Potere di interruzione ≥ Icc presunta, o back-up da tabella costruttore</td><td>CEI 64-8 sez. 434; Gewiss pag. 724</td></tr><tr><td>Icc minima a fondo linea ≥ soglia magnetica</td><td>CEI 64-8 sez. 434</td></tr>
+ <tr><td>ΔV cumulata dalla consegna ≤ limite impostato (max 4%)</td><td>CEI 64-8 sez. 525; CEI-UNEL 35023</td></tr><tr><td>Ra·IΔn ≤ 50 V; parti a monte dei differenziali in classe II</td><td>CEI 64-8 sez. 413</td></tr>
+ <tr><td>Ptot ≤ potenza dissipabile del centralino</td><td>CEI 23-51</td></tr><tr><td>SPI integrato/esterno</td><td>CEI 0-21</td></tr></table>
+ <p class="muted">Il presente documento è un supporto al dimensionamento: la necessità e la classe degli SPD derivano dalla valutazione del rischio (CEI EN 62305-2); per abitazioni oltre 6 kW il progetto dell'impianto è obbligatorio (DM 37/08 art. 5).</p>`;
+ return s}
+function buildSch(R){const tot=R.order.length+1;let s=`${coverHTML('Schemi elettrici quadri BT','Schema a blocchi e schemi unifilari')}`;
+ s+=`<div class="pb"></div><div class="t1"><h2>Tav. 1 — Schema a blocchi dell'impianto</h2>${archBlock(R)}
+ <table><tr><th>Quadro</th><th>Alimentato da</th><th>Sistema</th><th>Testa</th><th>Linea di alimentazione</th><th>Centralino</th></tr>
+ ${R.order.map(id=>{const Rq=R.Q[id],q=Rq.q,fl=Rq.feedLine,hd=Rq.head;return`<tr><td>${esc(q.nome)}</td><td>${q.parent?esc(qName(q.parent)):'Contatore'}</td><td>${q._fasi==3?'3F+N':'1F+N '+(q._fase||'')}</td><td>${hd?(hd.dev?hd.dev.code+' '+hd.dev.poles+' C'+hd.In:hd.code+' sez. '+hd.In+' A'):'—'}</td><td>${fl&&!fl.err?`${fl.sol.prot.poles} ${fl.curva}${fl.In} · ${fl.fasi==3?'5G':'3G'}${fl.S} mm² · ${q.feeder.L} m`:`Montante ${S.forn.montS} mm² · ${S.forn.montL} m`}</td><td>${Rq.enc?Rq.enc.c[q.porta]+' '+Rq.enc.mod+'M '+Rq.E.ip:'—'}</td></tr>`}).join('')}</table>${cartiglio(1,tot,'Schema a blocchi')}</div>`;
+ R.order.forEach((id,n)=>{const Rq=R.Q[id];s+=`<div class="pb"></div><h2>Tav. ${n+2} — Schema unifilare ${esc(Rq.q.nome)}</h2><div class="nb">${svgUnifilare(Rq)}</div>${legendTable(Rq)}${cartiglio(n+2,tot,'Unifilare '+Rq.q.nome)}`});
+ return s}
+function buildCert(R){const F=S.forn;let s=coverHTML('Fascicolo di certificazione quadri','CEI 23-51 — dati di progetto, verifiche e prove individuali');
+ s+=`<h2>Elenco quadri</h2><table><tr><th>#</th><th>Quadro</th><th>In</th><th>Icc</th><th>Centralino</th><th>Sovratemperatura</th></tr>${R.order.map((id,n)=>{const Rq=R.Q[id];return`<tr><td>${n+1}</td><td>${esc(Rq.q.nome)}</td><td>${Rq.head?.In??'—'} A</td><td>${f(Rq.sup.IccQ,2)} kA</td><td>${Rq.enc?Rq.enc.c[Rq.q.porta]+' '+Rq.enc.mod+'M':'—'}</td><td>${Rq.okP&&Rq.okMod?'Verificata':'NON verificata'}</td></tr>`}).join('')}</table>`;
+ R.order.forEach((id,n)=>{const Rq=R.Q[id],q=Rq.q;const rcds=Rq.lines.filter(l=>!l.err&&l.idn);
+  const icRows=[Rq.head?.dev?{n:'Testa',c:Rq.head.dev.code,v:Rq.head.Icn||SERI[Rq.head.dev.ser].icn}:null,...Rq.lines.filter(l=>!l.err).map(l=>({n:l.nome,c:l.sol.prot.code,v:l.sol.icOk?l.sol.icn:l.sol.bu,bu:!l.sol.icOk}))].filter(Boolean);
+  s+=`<div class="pb"></div><h2>Quadro ${n+1}: ${esc(q.nome)}</h2>
+  <h3>A. Dati di targa</h3>${targaTable(Rq)}
+  <h3>B. Componenti installati</h3>${bomTable(Rq)}
+  <h3>C. Verifica di sovratemperatura (CEI 23-51, metodo per calcolo)</h3>${thermTable(Rq)}
+  <h3>D. Verifica del potere di interruzione</h3><table><tr><th>Apparecchio</th><th>Codice</th><th class="n">Potere di interruzione kA</th><th class="n">Icc presunta kA</th><th>Esito</th></tr>
+  ${icRows.map(r=>`<tr><td>${esc(r.n)}</td><td>${r.c}</td><td class="n">${f(r.v,1)}${r.bu?' (back-up)':''}</td><td class="n">${f(Rq.sup.IccQ,2)}</td><td>${r.v>=Rq.sup.IccQ?'✓':'✗'}</td></tr>`).join('')}</table>
+  <div class="nb"><h3>E. Prove individuali</h3><table><tr><th style="width:40%">Prova</th><th>Valore misurato</th><th style="width:12%">Esito</th></tr>
+  <tr><td>Ispezione a vista: cablaggio, serraggi alle coppie del costruttore, siglatura, corrispondenza allo schema</td><td></td><td></td></tr>
+  <tr><td>Grado di protezione ${Rq.E.ip} e integrità della classe II (pressacavi, coperture, tappi)</td><td></td><td></td></tr>
+  <tr><td>Continuità dei circuiti di protezione (PE)</td><td>Ω</td><td></td></tr>
+  <tr><td>Resistenza di isolamento a 500 V DC (≥ 1 MΩ)</td><td>MΩ</td><td></td></tr>
+  ${rcds.map(l=>`<tr><td>Differenziale ${esc(l.nome)} — tipo ${l.rcd} ${l.idn} mA (${l.sol.items.map(d=>d.code).join('+')})</td><td>IΔ ____ mA · t ____ ms</td><td></td></tr>`).join('')}
+  ${R.spiExt&&R.spiQ===q.id?'<tr><td>SPI/DDI: prova di intervento con cassetta prova relè</td><td></td><td></td></tr>':''}</table></div>
+  <div class="nb"><h3>F. Dichiarazione di conformità del quadro</h3><div class="box">Il sottoscritto, in qualità di costruttore del quadro, dichiara che il quadro <b>${esc(q.nome)}</b>${F.commessa?' (commessa '+esc(F.commessa)+')':''}, installato presso ${dash(F.indirizzo)}, è stato realizzato in conformità alla norma CEI 23-51, assemblando componenti conformi alle rispettive norme di prodotto secondo le istruzioni dei costruttori, e che ha superato con esito positivo le verifiche e prove individuali sopra riportate.
+  <table style="margin-top:3mm"><tr><th>Costruttore del quadro</th><td>${dash(F.assemblatore)}</td></tr><tr><th>Sede</th><td>${dash(F.assInd)}</td></tr><tr><th>Data</th><td>${today()}</td></tr><tr><th>Timbro e firma</th><td class="sig"></td></tr></table></div></div>`});
+ return s}
+function doPrint(mode){if(!mode)return;if(!lastR){alert('Nessun calcolo disponibile.');return}
+ const P=$('#print');P.innerHTML=mode==='rel'?buildRel(lastR):mode==='sch'?buildSch(lastR):buildCert(lastR);
+ let st=document.getElementById('pagesz');if(!st){st=document.createElement('style');st.id='pagesz';document.head.appendChild(st)}
+ st.textContent=mode==='sch'?'@page{size:A4 landscape;margin:10mm}':'@page{size:A4;margin:12mm}';
+ const old=document.title;document.title=(S.forn.commessa||S.forn.cliente||'Impianto')+' — '+({rel:'Relazione tecnica',sch:'Schemi elettrici',cert:'Fascicolo certificazione'}[mode]);
+ document.body.classList.add('printing');
+ const done=()=>{document.body.classList.remove('printing');P.innerHTML='';document.title=old;window.removeEventListener('afterprint',done)};
+ window.addEventListener('afterprint',done);setTimeout(()=>window.print(),50)}
 function renderDB(){const row=a=>a.map(x=>`<td class="n">${x}</td>`).join('');
  const cnt={};DEV.forEach(d=>{const k=d.ser+(d.rcd?' '+d.rcd:'');cnt[k]=(cnt[k]||0)+1});
  $('#t-db').innerHTML=`<div class="card"><h2>Origine dei dati</h2>
