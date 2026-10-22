@@ -58,7 +58,7 @@ svg text{fill:var(--tx);font-family:system-ui,sans-serif}
 <body>
 <header>
   <div><h1>Dimensionatore Quadri BT — residenziale e FV ≤ 20 kW</h1>
-  <small>Sistema TT · CEI 64-8 · CEI-UNEL 35024/1 e 35023 · CEI 23-51 · CEI 0-21 · Catalogo tecnico Gewiss Energy 2026-27 · v1.3.2</small></div>
+  <small>Sistema TT · CEI 64-8 · CEI-UNEL 35024/1 e 35023 · CEI 23-51 · CEI 0-21 · Catalogo tecnico Gewiss Energy 2026-27 · v1.3.3</small></div>
   <div class="btns">
     <button class="sec" onclick="saveLS(true)">Salva</button>
     <button class="sec" onclick="exportJSON()">Esporta progetto</button>
@@ -518,10 +518,11 @@ function calcCore(minGen,drv){
  return R;
 }
 
+const add2=(R,k,m)=>R.msgs.push([k,m]);
 // Due passate: 1) dimensiona tutte le linee del quadro generale; 2) sceglie il generale sopra la linea più grande realmente scelta
 function calc(){
  const R1=calcCore(0,null),RG=R1.Q[R1.root];
- if(RG.q.selAmp==='no')return R1;
+ if(RG.q.selAmp==='no'){RG.trace.push('Selettività del generale verso le linee DISATTIVATA (tab Quadri → Generale selettivo sulle linee = No): generale dimensionato solo su contratto e carichi.');add2(R1,'wa','Generale selettivo sulle linee = No: il generale può risultare più piccolo delle linee a valle.');return R1}
  const ls=RG.lines.filter(l=>!l.err&&l.In);if(!ls.length)return R1;
  const drv=ls.reduce((a,b)=>b.In>a.In?b:a);const minG=STD_IN.find(x=>x>drv.In)||99;
  if(RG.head&&RG.head.In>=minG){RG.trace.push(`Selettività sul sovraccarico: protezione più grande nel quadro generale = ${drv.In} A (${drv.nome}) → generale In ${RG.head.In} A già superiore ✓`);return R1}
@@ -678,6 +679,7 @@ function renderRis(R){const F=S.forn;
  const dc=R.dc.map(d=>`<tr><td>${esc(d.inv)}</td><td>${d.mppt}</td><td>${d.ns}×${d.np}</td><td class="n">${f(d.voc,0)}</td><td>${st(d.vOk)}</td><td class="n">${f(d.isc,1)}</td><td>${st(d.iOk)}</td><td>${d.fuse?(d.fIn?'gPV '+d.fIn+' A':'KO'):'Non necessari'}</td><td><details><summary>traccia</summary><pre>${esc(d.trace.join('\n'))}</pre></details></td></tr>`).join('');
  $('#t-ris').innerHTML=`<div class="card"><h2>Esito — ${esc(F.cliente||'Impianto')}</h2>
  <div class="kpi"><div><span>Generale</span><b>${RG.head?.dev?RG.head.dev.poles+' C'+RG.head.In+' · '+RG.head.Icn+' kA':'—'}</b><span>${RG.head?.dev?.code||''}</span></div>
+ <div><span>Selettività generale → linee</span><b>${RG.q.selAmp==='no'?'Disattivata':'Attiva'}</b><span>max linea ${Math.max(0,...RG.lines.filter(l=>!l.err).map(l=>l.In))} A</span></div>
  <div><span>Quadri</span><b>${R.order.length}</b><span>${R.order.map(id=>R.Q[id].enc?R.Q[id].enc.mod:'?').join(' + ')} moduli</span></div>
  <div><span>Carichi per fase (P·Ku·Kc sottoquadri)</span><b>${F.fasi==3?['L1','L2','L3'].map(k=>f(R.ph[k],1)).join(' / '):f(R.ph.L1,1)} kW</b><span>contratto ${F.P} kW</span></div>
  <div><span>Esito verifiche</span><b class="${nE?'er':nW?'wa':'ok'}">${nE?nE+' errori':nW?nW+' da verificare':'Conforme'}</b><span>${nW} avvisi</span></div></div>
